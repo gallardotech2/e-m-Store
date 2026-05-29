@@ -1,0 +1,17 @@
+# Uploaded images
+uploads/*
+
+# Logs
+error_log.php
+*.log
+error_log.txt
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
