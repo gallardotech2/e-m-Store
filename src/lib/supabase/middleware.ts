@@ -45,14 +45,20 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (user && isAdminRoute) {
+  if (user) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('rol')
       .eq('id', user.id)
       .single()
 
-    if (profile?.rol !== 'admin') {
+    if (isAdminRoute && profile?.rol !== 'admin') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/'
+      return NextResponse.redirect(url)
+    }
+
+    if (isAffiliateRoute && profile?.rol !== 'afiliado' && profile?.rol !== 'admin') {
       const url = request.nextUrl.clone()
       url.pathname = '/'
       return NextResponse.redirect(url)
