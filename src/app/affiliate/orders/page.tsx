@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 export const metadata: Metadata = { robots: { index: false, follow: false } }
 import { AffiliateOrdersTable } from './orders-table'
 
@@ -11,8 +12,8 @@ export default async function AffiliateOrdersPage() {
 
   if (!user) return <p>Debes iniciar sesión</p>
 
-  const supabase = authSupabase
-  const { data: orders } = await supabase
+  const adminSupabase = createAdminClient()
+  const { data: orders } = await adminSupabase
     .from('orders')
     .select('*, products(nombre, precio)')
     .eq('afiliado_id', user.id)
