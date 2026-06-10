@@ -63,7 +63,8 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true, orderId: data.id })
-  } catch {
+  } catch (e) {
+    console.error('Error en POST /api/orders:', e)
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }

@@ -314,4 +314,22 @@ CREATE POLICY "Profiles: lectura pública de codigo_corto"
 -- END;
 -- $$ LANGUAGE plpgsql SECURITY DEFINER;
 */
+
+-- ============================================================
+-- Fix 00018: RLS orders TO anon → TO public
+-- Fecha ejecución: Pendiente
+-- Descripción: Cambia la policy de orders INSERT de TO anon a
+-- TO public para permitir tanto a anónimos como autenticados.
+-- Motivo: El server client de la API route a veces está autenticado
+-- (hereda cookie de sesión), y TO anon bloquea el INSERT.
+-- ============================================================
+
+/*
+-- SQL a ejecutar:
+DROP POLICY IF EXISTS "Orders: cualquiera puede crear órdenes" ON orders;
+
+CREATE POLICY "Orders: cualquiera puede crear órdenes"
+  ON orders FOR INSERT
+  TO public
+  WITH CHECK (true);
 */

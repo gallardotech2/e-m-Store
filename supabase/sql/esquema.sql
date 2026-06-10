@@ -391,7 +391,7 @@ CREATE POLICY "Orders: afiliados ven sus propias órdenes"
 
 CREATE POLICY "Orders: cualquiera puede crear órdenes"
   ON orders FOR INSERT
-  TO anon
+  TO public
   WITH CHECK (true);
 
 -- SYSTEM_CONFIG

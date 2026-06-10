@@ -1,4 +1,4 @@
--- ESTADO: EJECUTADO 
+-- ESTADO: PENDIENTE 
 -- ============================================================
 -- E-M STORE V2.0 — Archivo de Ejecución SQL
 -- ============================================================
@@ -43,3 +43,19 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================================
+-- Fix 00018: Cambiar RLS de orders INSERT de TO anon a TO public
+-- Fecha: 2026-06-09
+-- Descripción: La policy "Orders: cualquiera puede crear órdenes"
+-- usaba TO anon, lo que bloqueaba el INSERT cuando el cliente
+-- llegaba autenticado (con cookie de sesión). Se cambia a TO public
+-- para permitir tanto a usuarios anónimos como autenticados crear órdenes.
+-- ============================================================
+
+DROP POLICY IF EXISTS "Orders: cualquiera puede crear órdenes" ON orders;
+
+CREATE POLICY "Orders: cualquiera puede crear órdenes"
+  ON orders FOR INSERT
+  TO public
+  WITH CHECK (true);
