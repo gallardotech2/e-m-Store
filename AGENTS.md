@@ -57,6 +57,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - `00006_rls_affiliate_links_insert` — **EJECUTADO** (policy INSERT para afiliados)
 - `00007_short_code_affiliates` — **EJECUTADO** (código corto + mensaje WhatsApp)
 - `00009_fix_rls_products` — **EJECUTADO** (TO public → TO anon)
+- `00017_fix_invite_codes_trigger` — **EJECUTADO** (consume invite_codes en handle_new_user)
+- `00018_fix_rls_orders_public` — **EJECUTADO** (TO anon → TO public en orders)
 
 ### Next.js 16 Breaking Changes (relevantes)
 1. **proxy.ts**: Reemplaza middleware.ts — edge runtime NO soportado
@@ -108,57 +110,38 @@ Usuario: "El login no funciona después del registro"
 
 ---
 
-## Skill: Gestión SQL con Tres Archivos
+## Skill: Gestión SQL con Tres Archivos — REGLAS ESTRICTAS
+
+### Regla de Oro
+**`ejecucion.sql` con estado `EJECUTADO` NO debe tener SQL dentro.** Solo el header. El SQL se mueve a migraciones.sql y esquema.sql.
 
 ### Configuración de Archivos
-- `supabase/sql/esquema.sql` — Estado actual de la BD (se actualiza después de ejecutar)
-- `supabase/sql/migraciones.sql` — Historial de migraciones ejecutadas
-- `supabase/sql/ejecucion.sql` — Cambios pendientes de ejecutar
+- `supabase/sql/esquema.sql` — Estado actual de la BD (se actualiza DESPUÉS de ejecutar)
+- `supabase/sql/migraciones.sql` — Historial de migraciones EJECUTADAS
+- `supabase/sql/ejecucion.sql` — Solo SQL pendiente. Si `ESTADO: EJECUTADO` → vacío (solo header)
 
-### Flujo de Trabajo
+### Reglas del Flujo
 
-#### 1. Al abrir el proyecto
-- Leer `ejecucion.sql`
-- Buscar línea `-- ESTADO:`
-- Si no existe → escribir `-- ESTADO: PENDIENTE` al inicio
-- Si dice "PENDIENTE" → mostrar notificación "⚠️ Hay cambios pendientes en ejecucion.sql"
-- Si dice "EJECUTADO" → mostrar "✅ No hay cambios pendientes"
-
-#### 2. Al guardar cambios en ejecucion.sql
-- Si estado == "EJECUTADO" y el contenido SQL ha cambiado:
-  - Cambiar estado a "PENDIENTE"
-  - Guardar archivo con nuevo estado
-  - Mostrar "🔄 Nuevo SQL detectado. Estado cambiado a PENDIENTE."
-
-#### 3. Ejecutar SQL pendiente (comando manual)
-- Leer `ejecucion.sql`
-- Si estado != "PENDIENTE" → mostrar "❌ No hay cambios pendientes"
-- Si estado == "PENDIENTE":
-  - Conectar a la BD (usar configuración del proyecto)
-  - Ejecutar el contenido SQL (excluyendo la línea de estado)
-  - Si éxito:
-    - Cambiar estado a "EJECUTADO"
-    - Mostrar "✅ SQL ejecutado correctamente"
-    - Actualizar `esquema.sql` y `migraciones.sql`
-  - Si error:
-    - Mostrar error y mantener estado como PENDIENTE
-
-#### 4. Prevenir escritura si hay pendiente
-- Si estado == "PENDIENTE" y el contenido nuevo es diferente:
-  - Mostrar advertencia "🚫 No puedes escribir nuevos cambios hasta ejecutar el pendiente"
-  - Cancelar guardado (opcional: forzar con confirmación)
-
-### Comandos Útiles
-```sql
--- Ver estado actual
-SELECT * FROM _migration_tracking ORDER BY id;
-
--- Ver migraciones pendientes
-SELECT * FROM _migration_tracking WHERE estado = 'pendiente';
-
--- Marcar migración como ejecutada
-UPDATE _migration_tracking SET estado = 'ejecutado', fecha_ejecucion = NOW() WHERE migration_name = 'nombre_migracion';
-
--- Agregar nueva migración
-INSERT INTO _migration_tracking (migration_name, descripcion, estado) VALUES ('00003_nombre', 'Descripción', 'pendiente');
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 1. LEER ejecucion.sql al empezar                            │
+│    → ESTADO: PENDIENTE → avisar "⚠️ Hay cambios pendientes" │
+│    → ESTADO: EJECUTADO  → verificar que NO HAYA SQL dentro  │
+│      (si hay SQL con ESTADO EJECUTADO, limpiar:             │
+│       mover SQL a migraciones.sql + esquema.sql,            │
+│       vaciar ejecucion.sql, dejar solo header)              │
+│    → Si no existe línea ESTADO → preguntar al usuario       │
+├─────────────────────────────────────────────────────────────┤
+│ 2. AL ESCRIBIR NUEVO SQL en ejecucion.sql                   │
+│    → PONER ESTADO: PENDIENTE                                │
+│    → Si ya hay PENDIENTE, no agregar nuevo sin ejecutar     │
+├─────────────────────────────────────────────────────────────┤
+│ 3. CUANDO EL USUARIO EJECUTA en Dashboard:                  │
+│    → ejecucion.sql: ESTADO: EJECUTADO + VACIAR SQL          │
+│    → migraciones.sql: agregar migración con fecha           │
+│    → esquema.sql: actualizar si cambió estructura/RLS       │
+├─────────────────────────────────────────────────────────────┤
+│ 4. NUNCA dejar SQL ejecutado dentro de ejecucion.sql        │
+│    NUNCA tocar código de afiliados sin permiso explícito    │
+└─────────────────────────────────────────────────────────────┘
 ```
