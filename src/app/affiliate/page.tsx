@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 export const metadata: Metadata = { robots: { index: false, follow: false } }
 import { Card, CardContent } from '@/components/ui/card'
 import { Link2, ShoppingCart, DollarSign, TrendingUp } from 'lucide-react'
@@ -14,10 +15,10 @@ export default async function AffiliateDashboard() {
 
   if (!user) return <p>Debes iniciar sesión</p>
 
-  const supabase = authSupabase
+  const adminSupabase = createAdminClient()
   const [{ count: linksCount }, { data: orders }] = await Promise.all([
-    supabase.from('affiliate_links').select('*', { count: 'exact', head: true }).eq('afiliado_id', user.id),
-    supabase.from('orders').select('total').eq('afiliado_id', user.id),
+    authSupabase.from('affiliate_links').select('*', { count: 'exact', head: true }).eq('afiliado_id', user.id),
+    adminSupabase.from('orders').select('total').eq('afiliado_id', user.id),
   ])
 
   const totalVentas = orders?.reduce((sum, o) => sum + Number(o.total ?? 0), 0) ?? 0
