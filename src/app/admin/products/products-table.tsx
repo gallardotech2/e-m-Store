@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { Pencil, Trash2 } from 'lucide-react'
+import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -21,17 +22,11 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { logAdminAction } from '@/lib/audit'
 
 interface Product {
   id: number
@@ -41,6 +36,7 @@ interface Product {
   precio_original: number | null
   imagen_url: string | null
   stock: number
+  duracion: number
   categories?: { nombre: string } | null
 }
 
@@ -58,14 +54,22 @@ function EditDialog({ product }: { product: Product }) {
     const descripcion = form.get('descripcion') as string
     const precio = Number(form.get('precio'))
     const stock = Number(form.get('stock'))
+    const duracion = Number(form.get('duracion')) || 28
 
     const { error } = await supabase
       .from('products')
-      .update({ nombre, descripcion, precio, stock })
+      .update({ nombre, descripcion, precio, stock, duracion })
       .eq('id', product.id)
 
     if (error) toast.error(error.message)
     else {
+      await logAdminAction(supabase, {
+        accion: 'update',
+        tabla: 'products',
+        registro_id: product.id,
+        datos_previos: { nombre: product.nombre, precio: product.precio, stock: product.stock, duracion: product.duracion },
+        datos_nuevos: { nombre, descripcion, precio, stock, duracion },
+      })
       toast.success('Producto actualizado')
       setOpen(false)
       router.refresh()
@@ -91,14 +95,18 @@ function EditDialog({ product }: { product: Product }) {
             <Label>Descripción</Label>
             <Textarea name="descripcion" defaultValue={product.descripcion ?? ''} rows={3} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Precio</Label>
               <Input name="precio" type="number" step="0.01" defaultValue={product.precio} required />
             </div>
             <div className="space-y-2">
-              <Label>Stock</Label>
+              <Label>Inventario</Label>
               <Input name="stock" type="number" defaultValue={product.stock} required />
+            </div>
+            <div className="space-y-2">
+              <Label>Duración (días)</Label>
+              <Input name="duracion" type="number" defaultValue={product.duracion} />
             </div>
           </div>
           <Button type="submit" disabled={loading}>
@@ -119,6 +127,12 @@ export function ProductsTable({ products }: { products: Product[] }) {
     const { error } = await supabase.from('products').update({ activo: false }).eq('id', id)
     if (error) toast.error(error.message)
     else {
+      await logAdminAction(supabase, {
+        accion: 'delete',
+        tabla: 'products',
+        registro_id: id,
+        datos_nuevos: { activo: false },
+      })
       toast.success('Producto eliminado')
       router.refresh()
     }
@@ -132,14 +146,15 @@ export function ProductsTable({ products }: { products: Product[] }) {
             <TableHead>Imagen</TableHead>
             <TableHead>Producto</TableHead>
             <TableHead>Precio</TableHead>
-            <TableHead>Stock</TableHead>
+            <TableHead>Inventario</TableHead>
+            <TableHead>Duración</TableHead>
             <TableHead>Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {products.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+              <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                 Sin productos
               </TableCell>
             </TableRow>
@@ -161,12 +176,15 @@ export function ProductsTable({ products }: { products: Product[] }) {
                 </TableCell>
                 <TableCell className="font-medium">{product.nombre}</TableCell>
                 <TableCell className="text-red-600 font-bold">
-                  Bs {product.precio.toLocaleString()}
+                  Bs {formatPrice(product.precio)}
                 </TableCell>
                 <TableCell>
                   <span className={`px-2 py-1 rounded text-xs font-medium ${product.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                     {product.stock}
                   </span>
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {product.duracion} días
                 </TableCell>
                 <TableCell className="flex gap-1">
                   <EditDialog product={product} />

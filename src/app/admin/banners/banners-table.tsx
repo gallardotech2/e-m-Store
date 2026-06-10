@@ -24,6 +24,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { logAdminAction } from '@/lib/audit'
 
 interface Banner {
   id: number
@@ -54,6 +55,13 @@ function EditDialog({ banner }: { banner: Banner }) {
 
     if (error) toast.error(error.message)
     else {
+      await logAdminAction(supabase, {
+        accion: 'update',
+        tabla: 'banners',
+        registro_id: banner.id,
+        datos_previos: { titulo: banner.titulo, orden: banner.orden },
+        datos_nuevos: { titulo: titulo || null, orden },
+      })
       toast.success('Banner actualizado')
       setOpen(false)
       router.refresh()
@@ -97,6 +105,12 @@ export function BannersTable({ banners }: { banners: Banner[] }) {
     const { error } = await supabase.from('banners').update({ activo: false }).eq('id', id)
     if (error) toast.error(error.message)
     else {
+      await logAdminAction(supabase, {
+        accion: 'delete',
+        tabla: 'banners',
+        registro_id: id,
+        datos_nuevos: { activo: false },
+      })
       toast.success('Banner eliminado')
       router.refresh()
     }
@@ -126,7 +140,7 @@ export function BannersTable({ banners }: { banners: Banner[] }) {
                 <TableCell>
                   <Image
                     src={banner.imagen_url}
-                    alt={banner.titulo ?? 'Banner'}
+                    alt={banner.titulo ?? 'Imagen de banner'}
                     width={80}
                     height={40}
                     className="rounded object-cover"

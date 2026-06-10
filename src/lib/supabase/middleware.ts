@@ -29,6 +29,10 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  if (request.nextUrl.pathname.startsWith('/api')) {
+    return supabaseResponse
+  }
+
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
   const isAffiliateRoute = request.nextUrl.pathname.startsWith('/affiliate')
   const isAuthRoute = request.nextUrl.pathname.startsWith('/auth')
@@ -39,7 +43,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (user && isAuthRoute) {
+  if (user && isAuthRoute && request.nextUrl.pathname !== '/auth/pending') {
     const url = request.nextUrl.clone()
     url.pathname = '/'
     return NextResponse.redirect(url)
@@ -48,9 +52,26 @@ export async function updateSession(request: NextRequest) {
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('rol')
+      .select('rol, status')
       .eq('id', user.id)
       .single()
+
+    // Check if user is approved (admins are always approved)
+    const isApproved = profile?.rol === 'admin' || profile?.status === 'aprobado'
+    
+    // If not approved and not on pending page, redirect to pending
+    if (!isApproved && request.nextUrl.pathname !== '/auth/pending') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth/pending'
+      return NextResponse.redirect(url)
+    }
+
+    // If approved and on pending page, redirect to appropriate dashboard
+    if (isApproved && request.nextUrl.pathname === '/auth/pending') {
+      const url = request.nextUrl.clone()
+      url.pathname = profile?.rol === 'admin' ? '/admin' : '/affiliate'
+      return NextResponse.redirect(url)
+    }
 
     if (isAdminRoute && profile?.rol !== 'admin') {
       const url = request.nextUrl.clone()

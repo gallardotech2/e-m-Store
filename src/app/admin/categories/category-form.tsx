@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { logAdminAction } from '@/lib/audit'
 
 export function CategoryForm() {
   const router = useRouter()
@@ -34,15 +35,21 @@ export function CategoryForm() {
     const nombre = form.get('nombre') as string
     const slug = form.get('slug') as string
 
-    const { error } = await supabase.from('categories').insert({
+    const { data: newCat, error } = await supabase.from('categories').insert({
       nombre,
       slug: slug || slugify(nombre),
       activo: true,
-    })
+    }).select('id').single()
 
     if (error) {
       toast.error(error.message)
     } else {
+      await logAdminAction(supabase, {
+        accion: 'create',
+        tabla: 'categories',
+        registro_id: newCat?.id,
+        datos_nuevos: { nombre, slug },
+      })
       toast.success('Categoría agregada correctamente')
       router.refresh()
       ;(e.target as HTMLFormElement).reset()
@@ -63,7 +70,7 @@ export function CategoryForm() {
               <Input name="nombre" onChange={handleSlug} required />
             </div>
             <div className="space-y-2">
-              <Label>Slug</Label>
+              <Label>Identificador</Label>
               <Input name="slug" placeholder="Auto-generado" />
             </div>
           </div>

@@ -1,16 +1,7 @@
 'use client'
 
 import { create } from 'zustand'
-
-interface Product {
-  id: number
-  nombre: string
-  descripcion: string | null
-  precio: number
-  precio_original: number | null
-  imagen_url: string | null
-  stock: number
-}
+import type { Product } from '@/types'
 
 interface BuyModalState {
   isOpen: boolean

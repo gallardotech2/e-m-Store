@@ -5,23 +5,11 @@ import { ShoppingCart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { useAffiliate } from '@/hooks/use-affiliate'
 import { useBuyModal } from '@/hooks/use-buy-modal'
-
-interface Product {
-  id: number
-  nombre: string
-  descripcion: string | null
-  precio: number
-  precio_original: number | null
-  imagen_url: string | null
-  stock: number
-  precio_envio: number
-  envio_opciones: string
-}
+import { formatPrice } from '@/lib/utils'
+import type { Product } from '@/types'
 
 export function ProductCard({ product }: { product: Product }) {
-  const { getAffiliateParam } = useAffiliate()
   const { openModal } = useBuyModal()
 
   const descuento =
@@ -32,8 +20,8 @@ export function ProductCard({ product }: { product: Product }) {
   const envioGratis = product.envio_opciones?.includes('gratis')
 
   return (
-    <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow duration-300 border-0 shadow-md">
-      <div className="relative aspect-square bg-gray-100">
+    <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow duration-300 border-0 shadow-md pt-0">
+      <div className="relative aspect-[4/3] bg-gray-100 rounded-t-xl overflow-hidden">
         {product.imagen_url ? (
           <Image
             src={product.imagen_url}
@@ -57,11 +45,11 @@ export function ProductCard({ product }: { product: Product }) {
         <h3 className="font-semibold text-sm line-clamp-2">{product.nombre}</h3>
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold text-red-600">
-            Bs {product.precio.toLocaleString()}
+            Bs {formatPrice(product.precio)}
           </span>
           {product.precio_original && product.precio_original > product.precio && (
             <span className="text-sm text-muted-foreground line-through">
-              Bs {product.precio_original.toLocaleString()}
+              Bs {formatPrice(product.precio_original)}
             </span>
           )}
         </div>
@@ -69,8 +57,7 @@ export function ProductCard({ product }: { product: Product }) {
           <p className="text-xs text-green-600 font-medium">Envío Gratis</p>
         )}
         <Button
-          className="w-full bg-red-600 hover:bg-red-700 text-white"
-          size="sm"
+          className="w-fit bg-red-600 hover:bg-red-700 text-white h-9 text-sm"
           onClick={() => openModal(product)}
         >
           <ShoppingCart className="h-4 w-4 mr-2" />

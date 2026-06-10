@@ -4,22 +4,24 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { registerSchema } from '@/lib/validations/auth'
+import { translateAuthError } from '@/lib/supabase/errors'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { Eye, EyeOff } from 'lucide-react'
 
 export default function RegisterPage() {
   const [nombre, setNombre] = useState('')
   const [email, setEmail] = useState('')
   const [telefono, setTelefono] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [codigo, setCodigo] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -32,7 +34,18 @@ export default function RegisterPage() {
       return
     }
 
-    const { error } = await supabase.auth.signUp({
+    const res = await fetch(`/api/invite-codes?codigo=${encodeURIComponent(result.data.codigo)}`)
+    const validateJson = await res.json()
+
+    if (!validateJson.valid) {
+      toast.error(validateJson.message || 'Código de invitación inválido o ya fue usado')
+      setLoading(false)
+      return
+    }
+
+    const supabase = createClient()
+
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: result.data.email,
       password: result.data.password,
       options: {
@@ -45,8 +58,8 @@ export default function RegisterPage() {
       },
     })
 
-    if (error) {
-      toast.error(error.message)
+    if (signUpError) {
+      toast.error(translateAuthError(signUpError.message))
       setLoading(false)
       return
     }
@@ -60,7 +73,7 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <Link href="/" className="text-2xl font-black text-red-600 mb-2 block">
-            E-M Store
+            e-m Store
           </Link>
           <CardTitle>Registro de Afiliado</CardTitle>
           <CardDescription>Ingresa el código de invitación que recibiste</CardDescription>
@@ -72,7 +85,7 @@ export default function RegisterPage() {
               <Input id="nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Correo electrónico</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="space-y-2">
@@ -81,7 +94,31 @@ export default function RegisterPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Contraseña</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <ul className="text-xs text-muted-foreground space-y-0.5 pl-1">
+                <li className={password.length >= 8 ? 'text-green-600' : ''}>Mínimo 8 caracteres</li>
+                <li className={/[a-z]/.test(password) ? 'text-green-600' : ''}>Al menos una minúscula</li>
+                <li className={/[A-Z]/.test(password) ? 'text-green-600' : ''}>Al menos una mayúscula</li>
+                <li className={/[0-9]/.test(password) ? 'text-green-600' : ''}>Al menos un número</li>
+                <li className={/[^a-zA-Z0-9]/.test(password) ? 'text-green-600' : ''}>Al menos un carácter especial</li>
+              </ul>
             </div>
             <div className="space-y-2">
               <Label htmlFor="codigo">Código de Invitación</Label>

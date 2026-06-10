@@ -57,7 +57,7 @@ export function ProfileForm({ profile }: { profile: Profile | null }) {
               <Input name="nombre" defaultValue={profile?.nombre ?? ''} required />
             </div>
             <div className="space-y-2">
-              <Label>Email</Label>
+              <Label>Correo electrónico</Label>
               <Input value={profile?.email ?? ''} disabled className="bg-gray-100" />
               <p className="text-xs text-muted-foreground">El email no se puede cambiar</p>
             </div>

@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 
 const links = [
-  { href: '/affiliate', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/affiliate', icon: LayoutDashboard, label: 'Panel' },
   { href: '/affiliate/links', icon: Link2, label: 'Mis Links' },
   { href: '/affiliate/orders', icon: ShoppingCart, label: 'Mis Pedidos' },
   { href: '/affiliate/profile', icon: User, label: 'Mi Perfil' },
@@ -34,7 +34,7 @@ export function AffiliateSidebar() {
   return (
     <aside className="w-64 bg-[#1a1a2e] text-white min-h-screen flex flex-col">
       <div className="p-4 text-center border-b border-white/10">
-        <h2 className="text-xl font-black">E-M Store</h2>
+        <h2 className="text-xl font-black">e-m Store</h2>
         <p className="text-xs text-white/60">Panel Afiliado</p>
       </div>
 

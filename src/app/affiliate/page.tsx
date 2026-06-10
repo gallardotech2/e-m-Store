@@ -1,66 +1,72 @@
 import { createClient } from '@/lib/supabase/server'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Link2, ShoppingCart, DollarSign } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Link2, ShoppingCart, DollarSign, TrendingUp } from 'lucide-react'
+import { formatPrice } from '@/lib/utils'
+import Link from 'next/link'
+
+export const dynamic = 'force-dynamic'
 
 export default async function AffiliateDashboard() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const authSupabase = await createClient()
+  const { data: { user } } = await authSupabase.auth.getUser()
 
   if (!user) return <p>Debes iniciar sesión</p>
 
-  const [{ count: linksCount }, { data: orders }] = await Promise.all([
+  const supabase = authSupabase
+  const [{ count: linksCount }, { data: orderAgg }] = await Promise.all([
     supabase.from('affiliate_links').select('*', { count: 'exact', head: true }).eq('afiliado_id', user.id),
-    supabase.from('orders').select('total').eq('afiliado_id', user.id),
+    supabase.from('orders').select('count, total.sum()').eq('afiliado_id', user.id),
   ])
 
-  const totalVentas = orders?.reduce((sum, o) => sum + Number(o.total ?? 0), 0) ?? 0
-  const totalPedidos = orders?.length ?? 0
+  const totalPedidos = orderAgg?.[0]?.count ?? 0
+  const totalVentas = Number(orderAgg?.[0]?.sum ?? 0)
 
   const stats = [
-    { icon: Link2, label: 'Mis Links', value: linksCount ?? 0, color: 'bg-blue-600' },
-    { icon: ShoppingCart, label: 'Pedidos', value: totalPedidos, color: 'bg-green-600' },
-    { icon: DollarSign, label: 'Ventas (Bs)', value: totalVentas.toLocaleString(), color: 'bg-yellow-600' },
+    { icon: Link2, label: 'Links', value: linksCount ?? 0, gradient: 'from-blue-500 to-blue-600', href: '/affiliate/links' },
+    { icon: ShoppingCart, label: 'Pedidos', value: totalPedidos, gradient: 'from-emerald-500 to-emerald-600', href: '/affiliate/orders' },
+    { icon: DollarSign, label: 'Ventas', value: `Bs ${formatPrice(totalVentas)}`, gradient: 'from-amber-500 to-orange-500', href: '/affiliate/orders' },
+    { icon: TrendingUp, label: 'Promedio', value: totalPedidos > 0 ? `Bs ${formatPrice(Math.round(totalVentas / totalPedidos))}` : 'Bs 0', gradient: 'from-purple-500 to-pink-500', href: '/affiliate/orders' },
+  ]
+
+  const quickActions = [
+    { label: '+ Nuevo Link', href: '/affiliate/links', color: 'bg-blue-600 hover:bg-blue-700' },
+    { label: 'Mis Pedidos', href: '/affiliate/orders', color: 'bg-gray-800 hover:bg-gray-900' },
+    { label: 'Ver Tienda', href: '/', color: 'bg-emerald-600 hover:bg-emerald-700', external: true },
   ]
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-2">Dashboard</h1>
-      <p className="text-muted-foreground mb-6">Bienvenido, {user.user_metadata?.nombre ?? user.email}</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Panel</h1>
+        <p className="text-muted-foreground text-sm">Bienvenido, {user.user_metadata?.nombre ?? user.email}</p>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {stats.map((stat) => (
-          <Card key={stat.label} className="border-0 shadow-md">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className={`${stat.color} p-3 rounded-lg text-white`}>
-                  <stat.icon className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stat.value}</p>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <Link key={stat.label} href={stat.href}>
+            <Card className="border-0 shadow-md hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <CardContent className={`p-4 md:p-5 bg-gradient-to-br ${stat.gradient} text-white rounded-lg`}>
+                <stat.icon className="h-7 w-7 md:h-8 md:w-8 mb-3 opacity-90" />
+                <p className="text-xl md:text-2xl font-bold leading-tight">{stat.value}</p>
+                <p className="text-xs md:text-sm opacity-80 mt-1">{stat.label}</p>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 
-      <Card className="border-0 shadow-md">
-        <CardHeader>
-          <CardTitle>Acciones Rápidas</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-3">
-          <a href="/affiliate/links" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors">
-            + Nuevo Link
-          </a>
-          <a href="/affiliate/orders" className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-900 transition-colors">
-            Mis Pedidos
-          </a>
-          <a href="/" target="_blank" className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors">
-            Ver Tienda
-          </a>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {quickActions.map((action) => (
+          <Link
+            key={action.label}
+            href={action.href}
+            target={action.external ? '_blank' : undefined}
+            className={`${action.color} text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors text-center`}
+          >
+            {action.label}
+          </Link>
+        ))}
+      </div>
     </div>
   )
 }

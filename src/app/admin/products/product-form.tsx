@@ -16,6 +16,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { logAdminAction } from '@/lib/audit'
 
 interface Category {
   id: number
@@ -38,6 +39,7 @@ export function ProductForm({ categories }: { categories: Category[] }) {
     const precio_original = form.get('precio_original') ? Number(form.get('precio_original')) : null
     const categoria_id = form.get('categoria_id') ? Number(form.get('categoria_id')) : null
     const stock = Number(form.get('stock'))
+    const duracion = Number(form.get('duracion')) || 28
     const precio_envio = Number(form.get('precio_envio'))
     const imagen = form.get('imagen') as File
 
@@ -50,20 +52,17 @@ export function ProductForm({ categories }: { categories: Category[] }) {
     let imagen_url = ''
 
     if (imagen.size > 0) {
-      const ext = imagen.name.split('.').pop()
-      const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('products')
-        .upload(fileName, imagen)
-
-      if (uploadError) {
-        toast.error('Error al subir imagen')
+      const uploadForm = new FormData()
+      uploadForm.append('file', imagen)
+      uploadForm.append('bucket', 'products')
+      const res = await fetch('/api/upload', { method: 'POST', body: uploadForm })
+      const uploadJson = await res.json()
+      if (!res.ok) {
+        toast.error(uploadJson.error || 'Error al subir imagen')
         setLoading(false)
         return
       }
-
-      const { data: urlData } = supabase.storage.from('products').getPublicUrl(fileName)
-      imagen_url = urlData.publicUrl
+      imagen_url = uploadJson.url
     }
 
     const envio_opciones = [
@@ -72,22 +71,29 @@ export function ProductForm({ categories }: { categories: Category[] }) {
       form.get('envio_recojo') ? 'recojo' : '',
     ].filter(Boolean).join(',')
 
-    const { error } = await supabase.from('products').insert({
+    const { data: newProduct, error } = await supabase.from('products').insert({
       nombre,
       descripcion,
       precio,
       precio_original,
       categoria_id,
       stock,
+      duracion,
       precio_envio,
       envio_opciones,
       imagen_url,
       activo: true,
-    })
+    }).select('id').single()
 
     if (error) {
       toast.error(error.message)
     } else {
+      await logAdminAction(supabase, {
+        accion: 'create',
+        tabla: 'products',
+        registro_id: newProduct?.id,
+        datos_nuevos: { nombre, precio, stock, categoria_id },
+      })
       toast.success('Producto agregado correctamente')
       router.refresh()
       ;(e.target as HTMLFormElement).reset()
@@ -129,18 +135,22 @@ export function ProductForm({ categories }: { categories: Category[] }) {
             <Textarea name="descripcion" rows={3} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label className="text-red-600 font-bold">Precio Original (Bs)</Label>
+            <Input name="precio_original" type="number" step="0.01" className="border-red-400" />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-green-600 font-bold">Precio (Bs)</Label>
+            <Input name="precio" type="number" step="0.01" className="border-green-400" required />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-green-600 font-bold">Precio Original (Bs)</Label>
-              <Input name="precio_original" type="number" step="0.01" className="border-green-400" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-red-600 font-bold">Precio (Bs)</Label>
-              <Input name="precio" type="number" step="0.01" className="border-red-400" required />
-            </div>
-            <div className="space-y-2">
-              <Label>Stock</Label>
+              <Label>Inventario</Label>
               <Input name="stock" type="number" defaultValue={10} required />
+            </div>
+            <div className="space-y-2">
+              <Label>Duración (días)</Label>
+              <Input name="duracion" type="number" defaultValue={28} />
             </div>
           </div>
 

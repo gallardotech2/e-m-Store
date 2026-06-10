@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+export const dynamic = "force-dynamic";
 import { OrdersTable } from './orders-table'
 
 export default async function AdminOrdersPage() {
@@ -6,7 +7,7 @@ export default async function AdminOrdersPage() {
 
   const { data: orders } = await supabase
     .from('orders')
-    .select('*, products(nombre, precio), profiles!orders_afiliado_id_fkey(nombre, email)')
+    .select('*, products(nombre, precio), profiles(nombre, email)')
     .order('created_at', { ascending: false })
 
   return (

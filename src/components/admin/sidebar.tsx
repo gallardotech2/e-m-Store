@@ -12,15 +12,17 @@ import {
   Settings,
   LogOut,
   Store,
+  Star,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
 const links = [
-  { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/admin', icon: LayoutDashboard, label: 'Panel' },
   { href: '/admin/products', icon: Package, label: 'Productos' },
   { href: '/admin/categories', icon: Tags, label: 'Categorías' },
+  { href: '/admin/featured', icon: Star, label: 'Destacados' },
   { href: '/admin/banners', icon: Image, label: 'Banners' },
   { href: '/admin/affiliates', icon: Users, label: 'Afiliados' },
   { href: '/admin/orders', icon: ShoppingCart, label: 'Pedidos' },
@@ -41,7 +43,7 @@ export function AdminSidebar() {
   return (
     <aside className="w-64 bg-[#1a1a2e] text-white min-h-screen flex flex-col">
       <div className="p-4 text-center border-b border-white/10">
-        <h2 className="text-xl font-black">E-M Store</h2>
+        <h2 className="text-xl font-black">e-m Store</h2>
         <p className="text-xs text-white/60">Panel Admin</p>
       </div>
 

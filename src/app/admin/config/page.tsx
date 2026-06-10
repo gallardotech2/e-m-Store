@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+export const dynamic = "force-dynamic";
 import { ConfigForm } from './config-form'
 
 export default async function AdminConfigPage() {

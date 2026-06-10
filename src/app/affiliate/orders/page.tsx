@@ -1,12 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { AffiliateOrdersTable } from './orders-table'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AffiliateOrdersPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const authSupabase = await createClient()
+  const { data: { user } } = await authSupabase.auth.getUser()
 
   if (!user) return <p>Debes iniciar sesión</p>
 
+  const supabase = authSupabase
   const { data: orders } = await supabase
     .from('orders')
     .select('*, products(nombre, precio)')

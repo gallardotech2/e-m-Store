@@ -7,17 +7,18 @@ export default async function AffiliateLinksPage() {
 
   if (!user) return <p>Debes iniciar sesión</p>
 
-  const { data: links } = await supabase
-    .from('affiliate_links')
-    .select('*, products(nombre, precio, imagen_url)')
-    .eq('afiliado_id', user.id)
-    .order('created_at', { ascending: false })
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('codigo_corto, telefono, codigo_pais')
+    .eq('id', user.id)
+    .single()
 
-  const { data: products } = await supabase
-    .from('products')
-    .select('id, nombre')
-    .eq('activo', true)
-    .order('nombre')
-
-  return <AffiliateLinksClient links={links ?? []} products={products ?? []} afiliadoId={user.id} />
+  return (
+    <AffiliateLinksClient
+      afiliadoId={user.id}
+      codigoCorto={profile?.codigo_corto ?? ''}
+      telefono={profile?.telefono ?? ''}
+      codigoPais={profile?.codigo_pais ?? '+591'}
+    />
+  )
 }

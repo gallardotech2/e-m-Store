@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
+export const dynamic = "force-dynamic";
 import { BannersTable } from './banners-table'
 import { BannerForm } from './banner-form'
+import { BannersAdminToggle } from './banners-admin-toggle'
 
 export default async function AdminBannersPage() {
   const supabase = await createClient()
@@ -12,7 +14,10 @@ export default async function AdminBannersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Banners</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Banners</h1>
+        <BannersAdminToggle />
+      </div>
       <BannerForm products={products ?? []} />
       <div className="mt-8">
         <BannersTable banners={banners ?? []} />

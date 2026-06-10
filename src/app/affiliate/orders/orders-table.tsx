@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { formatPrice } from '@/lib/utils'
 
 interface Order {
   id: number
@@ -64,7 +65,7 @@ export function AffiliateOrdersTable({ orders }: { orders: Order[] }) {
                   <div className="text-xs text-muted-foreground">{order.telefono_cliente ?? '—'}</div>
                 </TableCell>
                 <TableCell>{order.products?.nombre ?? '—'}</TableCell>
-                <TableCell className="font-bold">Bs {Number(order.total).toLocaleString()}</TableCell>
+                <TableCell className="font-bold">Bs {formatPrice(Number(order.total))}</TableCell>
                 <TableCell className="text-sm">{order.metodo_pago ?? '—'}</TableCell>
                 <TableCell>
                   <span className={`px-2 py-1 rounded text-xs font-medium ${statusBadge[order.estado] ?? ''}`}>

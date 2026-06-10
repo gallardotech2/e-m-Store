@@ -15,6 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { logAdminAction } from '@/lib/audit'
 
 interface Product {
   id: number
@@ -43,32 +44,36 @@ export function BannerForm({ products }: { products: Product[] }) {
       return
     }
 
-    const ext = imagen.name.split('.').pop()
-    const fileName = `banner_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
-    const { error: uploadError } = await supabase.storage
-      .from('banners')
-      .upload(fileName, imagen)
-
-    if (uploadError) {
-      toast.error('Error al subir imagen')
+    const uploadForm = new FormData()
+    uploadForm.append('file', imagen)
+    uploadForm.append('bucket', 'banners')
+    const res = await fetch('/api/upload', { method: 'POST', body: uploadForm })
+    const uploadJson = await res.json()
+    if (!res.ok) {
+      toast.error(uploadJson.error || 'Error al subir imagen')
       setLoading(false)
       return
     }
+    const imagen_url = uploadJson.url
 
-    const { data: urlData } = supabase.storage.from('banners').getPublicUrl(fileName)
-
-    const { error } = await supabase.from('banners').insert({
+    const { data: newBanner, error } = await supabase.from('banners').insert({
       titulo: titulo || null,
       link: link || null,
       producto_id,
       orden,
-      imagen_url: urlData.publicUrl,
+      imagen_url,
       activo: true,
-    })
+    }).select('id').single()
 
     if (error) {
       toast.error(error.message)
     } else {
+      await logAdminAction(supabase, {
+        accion: 'create',
+        tabla: 'banners',
+        registro_id: newBanner?.id,
+        datos_nuevos: { titulo, orden },
+      })
       toast.success('Banner agregado correctamente')
       router.refresh()
       ;(e.target as HTMLFormElement).reset()

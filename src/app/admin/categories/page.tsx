@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+export const dynamic = "force-dynamic";
 import { CategoriesTable } from './categories-table'
 import { CategoryForm } from './category-form'
 

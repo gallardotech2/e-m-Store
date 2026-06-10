@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { logAdminAction } from '@/lib/audit'
 
 const fields = [
-  { key: 'sitio_nombre', label: 'Nombre de la Tienda', placeholder: 'E-M Store' },
+  { key: 'sitio_nombre', label: 'Nombre de la Tienda', placeholder: 'e-m Store' },
   { key: 'admin_whatsapp_fallback', label: 'WhatsApp Admin', placeholder: '591XXXXXXXXX' },
   { key: 'moneda_simbolo', label: 'Símbolo Monetario', placeholder: 'Bs' },
   { key: 'afiliado_cookie_dias', label: 'Días Cookie Afiliado', placeholder: '90' },
@@ -43,6 +44,11 @@ export function ConfigForm({ config }: { config: Record<string, string> }) {
       }
     }
 
+    await logAdminAction(supabase, {
+      accion: 'update',
+      tabla: 'system_config',
+      datos_nuevos: Object.fromEntries(updates.map((u) => [u.clave, u.valor])),
+    })
     toast.success('Configuración guardada')
     router.refresh()
     setLoading(false)

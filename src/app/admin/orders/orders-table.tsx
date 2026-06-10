@@ -17,7 +17,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { createClient } from '@/lib/supabase/client'
+import { formatPrice } from '@/lib/utils'
 import { toast } from 'sonner'
+import { logAdminAction } from '@/lib/audit'
 
 interface Order {
   id: number
@@ -44,9 +46,21 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
   const supabase = createClient()
 
   async function handleStatusChange(orderId: number, estado: string) {
+    const { data: oldOrder } = await supabase
+      .from('orders')
+      .select('estado')
+      .eq('id', orderId)
+      .single()
     const { error } = await supabase.from('orders').update({ estado }).eq('id', orderId)
     if (error) toast.error(error.message)
     else {
+      await logAdminAction(supabase, {
+        accion: 'update',
+        tabla: 'orders',
+        registro_id: orderId,
+        datos_previos: oldOrder ? { estado: oldOrder.estado } : null,
+        datos_nuevos: { estado },
+      })
       toast.success('Estado actualizado')
       router.refresh()
     }
@@ -91,7 +105,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                 <TableCell>{order.products?.nombre ?? '—'}</TableCell>
                 <TableCell>{order.cantidad}</TableCell>
                 <TableCell className="font-bold">
-                  Bs {Number(order.total).toLocaleString()}
+                  Bs {formatPrice(Number(order.total))}
                 </TableCell>
                 <TableCell className="text-sm">{order.metodo_pago ?? '—'}</TableCell>
                 <TableCell className="text-sm">

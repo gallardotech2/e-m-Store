@@ -23,6 +23,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { logAdminAction } from '@/lib/audit'
 
 interface Category {
   id: number
@@ -50,6 +51,13 @@ function EditDialog({ category }: { category: Category }) {
 
     if (error) toast.error(error.message)
     else {
+      await logAdminAction(supabase, {
+        accion: 'update',
+        tabla: 'categories',
+        registro_id: category.id,
+        datos_previos: { nombre: category.nombre, slug: category.slug },
+        datos_nuevos: { nombre, slug },
+      })
       toast.success('Categoría actualizada')
       setOpen(false)
       router.refresh()
@@ -72,7 +80,7 @@ function EditDialog({ category }: { category: Category }) {
             <Input name="nombre" defaultValue={category.nombre} required />
           </div>
           <div className="space-y-2">
-            <Label>Slug</Label>
+            <Label>Identificador</Label>
             <Input name="slug" defaultValue={category.slug} required />
           </div>
           <Button type="submit" disabled={loading}>
@@ -93,6 +101,12 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
     const { error } = await supabase.from('categories').update({ activo: false }).eq('id', id)
     if (error) toast.error(error.message)
     else {
+      await logAdminAction(supabase, {
+        accion: 'delete',
+        tabla: 'categories',
+        registro_id: id,
+        datos_nuevos: { activo: false },
+      })
       toast.success('Categoría eliminada')
       router.refresh()
     }
@@ -104,7 +118,7 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
         <TableHeader>
           <TableRow>
             <TableHead>Nombre</TableHead>
-            <TableHead>Slug</TableHead>
+            <TableHead>Identificador</TableHead>
             <TableHead>Acciones</TableHead>
           </TableRow>
         </TableHeader>

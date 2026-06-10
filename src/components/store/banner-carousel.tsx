@@ -1,9 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Image from 'next/image'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import Link from 'next/link'
+import { UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Carousel3D } from '@/components/Carousel3D'
+import type { CarouselImage } from '@/components/Carousel3D'
 
 interface Banner {
   id: number
@@ -13,66 +20,69 @@ interface Banner {
   producto_id: number | null
 }
 
-export function BannerCarousel({ banners }: { banners: Banner[] }) {
-  const [current, setCurrent] = useState(0)
+interface Category {
+  id: number
+  nombre: string
+  slug: string
+}
 
-  useEffect(() => {
-    if (banners.length === 0) return
-    const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % banners.length)
-    }, 15000)
-    return () => clearInterval(timer)
-  }, [banners.length])
+export function BannerCarousel({ banners, categories }: { banners: Banner[]; categories: Category[] }) {
+
+  function handleCategoryClick(catId: number) {
+    document.getElementById(`cat-${catId}`)?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   if (banners.length === 0) {
     return (
-      <section className="bg-gradient-to-r from-red-700 to-red-500 text-white py-16 text-center">
-        <h1 className="text-5xl font-black mb-2">E-M Store</h1>
-        <p className="text-xl font-bold opacity-90">Lo quieres, lo tienes · Envíos a todo Bolivia</p>
+      <section className="bg-[#1a1a2e] text-white py-16 text-center relative">
+        <h1 className="text-5xl font-black mb-2 text-white">e-m Store</h1>
+        <p className="text-xl font-bold text-white/60">Lo quieres, lo tienes · Envíos a todo Bolivia</p>
       </section>
     )
   }
 
-  const banner = banners[current]
+  const images: CarouselImage[] = banners.map((b) => ({
+    src: b.imagen_url,
+    alt: b.titulo ?? 'Banner de e-m Store',
+  }))
 
   return (
-    <section className="relative overflow-hidden bg-gray-900" style={{ aspectRatio: '1080/400' }}>
-      {banner.imagen_url && (
-        <Image
-          src={banner.imagen_url}
-          alt={banner.titulo ?? 'Banner'}
-          fill
-          className="object-cover"
-          priority
+    <section className="w-full relative bg-[#1a1a2e]">
+      <div className="hidden md:flex items-center justify-between absolute top-4 left-6 right-6 z-10">
+        <h1 className="text-3xl font-black text-white">
+          e-m Store
+        </h1>
+        <div className="flex items-center gap-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<Button variant="ghost" className="text-white hover:bg-white/20" />}>
+              Categorías
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {categories.map((cat) => (
+                <DropdownMenuItem key={cat.id} onClick={() => handleCategoryClick(cat.id)}>
+                  {cat.nombre}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Link href="/auth/login">
+            <Button variant="ghost" className="text-white hover:bg-white/20">
+              <UserPlus className="h-4 w-4 mr-2" />
+              Afiliados
+            </Button>
+          </Link>
+        </div>
+      </div>
+      <div className="relative z-[1]">
+        <Carousel3D
+          images={images}
+          autoPlay
+          interval={5000}
+          loop
+          showArrows
+          showBullets
         />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute left-2 top-1/2 -translate-y-1/2 text-white bg-black/30 hover:bg-black/50 rounded-full h-10 w-10"
-        onClick={() => setCurrent((prev) => (prev - 1 + banners.length) % banners.length)}
-      >
-        <ChevronLeft className="h-6 w-6" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute right-2 top-1/2 -translate-y-1/2 text-white bg-black/30 hover:bg-black/50 rounded-full h-10 w-10"
-        onClick={() => setCurrent((prev) => (prev + 1) % banners.length)}
-      >
-        <ChevronRight className="h-6 w-6" />
-      </Button>
-
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-        {banners.map((_, i) => (
-          <button
-            key={i}
-            className={`h-2 w-2 rounded-full transition-all ${i === current ? 'bg-white w-6' : 'bg-white/50'}`}
-            onClick={() => setCurrent(i)}
-          />
-        ))}
       </div>
     </section>
   )

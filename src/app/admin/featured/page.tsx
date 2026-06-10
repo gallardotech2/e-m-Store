@@ -1,0 +1,26 @@
+import { createClient } from '@/lib/supabase/server'
+export const dynamic = "force-dynamic"
+import { FeaturedTable } from './featured-table'
+import { FeaturedForm } from './featured-form'
+
+export default async function AdminFeaturedPage() {
+  const supabase = await createClient()
+
+  const [{ data: featured }, { data: products }] = await Promise.all([
+    supabase.from('featured_products').select('*, products(id, nombre, precio)').order('orden'),
+    supabase.from('products').select('id, nombre').eq('activo', true).order('nombre'),
+  ])
+
+  const usedIds = new Set(featured?.map((f) => f.producto_id) ?? [])
+  const availableProducts = (products ?? []).filter((p) => !usedIds.has(p.id))
+
+  return (
+    <div>
+      <h1 className="text-2xl font-bold mb-6">Productos Destacados</h1>
+      <FeaturedForm products={availableProducts} />
+      <div className="mt-8">
+        <FeaturedTable items={featured ?? []} />
+      </div>
+    </div>
+  )
+}

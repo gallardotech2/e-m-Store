@@ -1,21 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
+export const dynamic = "force-dynamic";
 import { ProductsTable } from './products-table'
 import { ProductForm } from './product-form'
 
 export default async function AdminProductsPage() {
   const supabase = await createClient()
 
-  const { data: products } = await supabase
-    .from('products')
-    .select('*, categories(nombre)')
-    .eq('activo', true)
-    .order('created_at', { ascending: false })
-
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('*')
-    .eq('activo', true)
-    .order('nombre')
+  const [{ data: products }, { data: categories }] = await Promise.all([
+    supabase.from('products').select('*, categories(nombre)').eq('activo', true).order('created_at', { ascending: false }),
+    supabase.from('categories').select('*').eq('activo', true).order('nombre'),
+  ])
 
   return (
     <div>

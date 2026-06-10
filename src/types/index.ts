@@ -28,7 +28,11 @@ export interface Product {
   precio_original: number | null
   categoria_id: number | null
   imagen_url: string | null
+  stock: number
+  precio_envio: number
+  envio_opciones: string
   activo: boolean
+  duracion: number
   created_at: string
   categories?: Category
 }
@@ -78,4 +82,12 @@ export interface Order {
 export interface SystemConfig {
   clave: string
   valor: string
+}
+
+export interface InviteCode {
+  codigo: string
+  usado: boolean
+  usado_por: string | null
+  usado_en: string | null
+  created_at: string
 }

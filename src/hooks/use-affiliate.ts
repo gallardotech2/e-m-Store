@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const COOKIE_NAME = 'afiliado_id'
 const COOKIE_DAYS = 90
@@ -14,29 +14,27 @@ function getCookie(name: string): string | null {
 
 function setCookie(name: string, value: string, days: number) {
   const expires = new Date(Date.now() + days * 864e5).toUTCString()
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax; Secure`
 }
 
 export function useAffiliate() {
   const searchParams = useSearchParams()
-  const [afiliadoId, setAfiliadoId] = useState<string | null>(null)
+  const urlParam = searchParams.get('a')
+  const cookieId = getCookie(COOKIE_NAME)
+
+  const [afiliadoId] = useState<string | null>(() => {
+    return urlParam ?? cookieId
+  })
 
   useEffect(() => {
-    const urlId = searchParams.get('a')
-    const cookieId = getCookie(COOKIE_NAME)
-    const id = urlId ?? cookieId
-
-    if (id) {
-      setAfiliadoId(id)
-      if (!cookieId && urlId) {
-        setCookie(COOKIE_NAME, urlId, COOKIE_DAYS)
-      }
+    if (urlParam && (!cookieId || cookieId !== urlParam)) {
+      setCookie(COOKIE_NAME, urlParam, COOKIE_DAYS)
     }
-  }, [searchParams])
+  }, [urlParam, cookieId])
 
   function getAffiliateParam(): string {
-    const id = afiliadoId || getCookie(COOKIE_NAME)
-    return id ? `?a=${id}` : ''
+    const currentId = afiliadoId || getCookie(COOKIE_NAME)
+    return currentId ? `?a=${currentId}` : ''
   }
 
   return { afiliadoId, getAffiliateParam }
