@@ -33,16 +33,17 @@ export function AffiliateLinksClient({
   codigoCorto,
   telefono: initialTelefono,
   codigoPais,
+  origin: string
 }: {
   afiliadoId: string
   codigoCorto: string
   telefono: string
   codigoPais: string
+  origin: string
 }) {
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [links, setLinks] = useState<LinkItem[]>([])
-  const [origin] = useState(() => typeof window !== 'undefined' ? window.location.origin : '')
   const [telefono, setTelefono] = useState(initialTelefono)
   const [savingPhone, setSavingPhone] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
