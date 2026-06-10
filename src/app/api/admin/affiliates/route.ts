@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
     registro_id: affiliate_id,
     datos_previos: oldProfile ? { status: oldProfile.status } : null,
     datos_nuevos: { status: action },
+    adminId: user.id,
   })
 
   return NextResponse.json({ success: true })

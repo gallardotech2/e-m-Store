@@ -59,7 +59,7 @@ export function AffiliateLinksClient({
     }
     fetchLinks()
     return () => { cancelled = true }
-  }, [supabase, afiliadoId])
+  }, [afiliadoId])
 
   async function refreshLinks() {
     const { data } = await supabase

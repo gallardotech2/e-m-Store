@@ -6,17 +6,21 @@ interface LogParams {
   registro_id?: string | number
   datos_previos?: Record<string, unknown> | null
   datos_nuevos?: Record<string, unknown> | null
+  adminId?: string
 }
 
 export async function logAdminAction(
   supabase: SupabaseClient,
-  { accion, tabla, registro_id, datos_previos, datos_nuevos }: LogParams
+  { adminId, accion, tabla, registro_id, datos_previos, datos_nuevos }: LogParams
 ) {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return
+  if (!adminId) {
+    const { data: { user } } = await supabase.auth.getUser()
+    adminId = user?.id
+  }
+  if (!adminId) return
 
   await supabase.from('admin_audit_log').insert({
-    admin_id: user.id,
+    admin_id: adminId,
     accion,
     tabla,
     registro_id: String(registro_id ?? ''),

@@ -5,7 +5,7 @@ import { ConfigForm } from './config-form'
 export default async function AdminConfigPage() {
   const supabase = await createClient()
 
-  const { data: configs } = await supabase.from('system_config').select('*')
+  const { data: configs } = await supabase.from('system_config').select('clave, valor')
 
   const configMap: Record<string, string> = {}
   for (const c of configs ?? []) {

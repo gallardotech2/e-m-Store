@@ -13,13 +13,13 @@ export default async function AffiliateDashboard() {
   if (!user) return <p>Debes iniciar sesión</p>
 
   const supabase = authSupabase
-  const [{ count: linksCount }, { data: orderAgg }] = await Promise.all([
+  const [{ count: linksCount }, { data: orders }] = await Promise.all([
     supabase.from('affiliate_links').select('*', { count: 'exact', head: true }).eq('afiliado_id', user.id),
-    supabase.from('orders').select('count, total.sum()').eq('afiliado_id', user.id),
+    supabase.from('orders').select('total').eq('afiliado_id', user.id),
   ])
 
-  const totalPedidos = orderAgg?.[0]?.count ?? 0
-  const totalVentas = Number(orderAgg?.[0]?.sum ?? 0)
+  const totalVentas = orders?.reduce((sum, o) => sum + Number(o.total ?? 0), 0) ?? 0
+  const totalPedidos = orders?.length ?? 0
 
   const stats = [
     { icon: Link2, label: 'Links', value: linksCount ?? 0, gradient: 'from-blue-500 to-blue-600', href: '/affiliate/links' },

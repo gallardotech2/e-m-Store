@@ -41,18 +41,18 @@ export default async function AdminDashboard() {
     { count: catCount },
     { count: orderCount },
     { count: affCount },
-    { data: orderStats },
+    { data: orderAmounts },
     { data: recentOrders },
   ] = await Promise.all([
     supabase.from('products').select('*', { count: 'exact', head: true }).eq('activo', true),
     supabase.from('categories').select('*', { count: 'exact', head: true }).eq('activo', true),
     supabase.from('orders').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('rol', 'afiliado'),
-    supabase.from('orders').select('total.sum()'),
+    supabase.from('orders').select('total'),
     supabase.from('orders').select('*, products(nombre)').order('created_at', { ascending: false }).limit(5),
   ])
 
-  const totalVentas = Number(orderStats?.[0]?.sum ?? 0)
+  const totalVentas = orderAmounts?.reduce((sum, o) => sum + Number(o.total ?? 0), 0) ?? 0
   const promedioPedido = orderCount && orderCount > 0 ? Math.round(totalVentas / orderCount) : 0
 
   const stats = [

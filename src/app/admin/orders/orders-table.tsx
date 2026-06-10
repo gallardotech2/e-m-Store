@@ -45,12 +45,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
   const router = useRouter()
   const supabase = createClient()
 
-  async function handleStatusChange(orderId: number, estado: string) {
-    const { data: oldOrder } = await supabase
-      .from('orders')
-      .select('estado')
-      .eq('id', orderId)
-      .single()
+  async function handleStatusChange(orderId: number, estado: string, estadoAnterior: string) {
     const { error } = await supabase.from('orders').update({ estado }).eq('id', orderId)
     if (error) toast.error(error.message)
     else {
@@ -58,7 +53,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
         accion: 'update',
         tabla: 'orders',
         registro_id: orderId,
-        datos_previos: oldOrder ? { estado: oldOrder.estado } : null,
+        datos_previos: { estado: estadoAnterior },
         datos_nuevos: { estado },
       })
       toast.success('Estado actualizado')
@@ -113,8 +108,9 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                 </TableCell>
                 <TableCell>
                   <Select
+                    key={`${order.id}-${order.estado}`}
                     defaultValue={order.estado}
-                    onValueChange={(v) => handleStatusChange(order.id, v ?? 'pendiente')}
+                    onValueChange={(v) => handleStatusChange(order.id, v ?? 'pendiente', order.estado)}
                   >
                     <SelectTrigger className={`w-32 text-xs font-medium ${statusColors[order.estado] ?? ''}`}>
                       <SelectValue />

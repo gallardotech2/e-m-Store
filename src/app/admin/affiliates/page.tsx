@@ -21,14 +21,15 @@ export default async function AdminAffiliatesPage() {
     .eq('rol', 'afiliado')
     .order('fecha_registro', { ascending: false })
 
-  const { data: commissionsData } = await supabase
+  const { data: orders } = await supabase
     .from('orders')
-    .select('afiliado_id, total.sum()')
+    .select('afiliado_id, total')
     .not('afiliado_id', 'is', null)
 
   const commissionsMap = new Map<string, number>()
-  for (const c of commissionsData ?? []) {
-    commissionsMap.set(c.afiliado_id, Number(c.sum ?? 0))
+  for (const o of orders ?? []) {
+    const current = commissionsMap.get(o.afiliado_id) ?? 0
+    commissionsMap.set(o.afiliado_id, current + Number(o.total ?? 0))
   }
 
   const affiliatesWithStats = (affiliates ?? []).map((aff) => ({
@@ -38,7 +39,7 @@ export default async function AdminAffiliatesPage() {
 
   const { data: inviteCodes } = await supabase
     .from('invite_codes')
-    .select('*')
+    .select('codigo, usado, usado_en, created_at')
     .order('created_at', { ascending: false })
 
   return (

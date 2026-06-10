@@ -18,8 +18,8 @@ export default async function HomePage({ searchParams }: PageProps) {
   const supabase = await createClient()
 
   const [categoriesResult, bannersResult, featuredResult, productsResult] = await Promise.all([
-    supabase.from('categories').select('*').eq('activo', true).order('nombre'),
-    supabase.from('banners').select('*').eq('activo', true).order('orden').order('id', { ascending: false }),
+    supabase.from('categories').select('id, nombre, slug').eq('activo', true).order('nombre'),
+    supabase.from('banners').select('id, imagen_url, titulo, link, producto_id, orden').eq('activo', true).order('orden').order('id', { ascending: false }),
     supabase.from('featured_products').select('*, products(*)').eq('activo', true).order('orden'),
     supabase.from('products').select('*').eq('activo', true).order('created_at', { ascending: false }),
   ])

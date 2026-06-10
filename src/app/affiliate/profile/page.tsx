@@ -9,7 +9,7 @@ export default async function AffiliateProfilePage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id, nombre, email, telefono, codigo_pais')
     .eq('id', user.id)
     .single()
 

@@ -8,7 +8,7 @@ export default async function AdminCategoriesPage() {
 
   const { data: categories } = await supabase
     .from('categories')
-    .select('*')
+    .select('id, nombre, slug')
     .eq('activo', true)
     .order('nombre')
 
