@@ -1,5 +1,7 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { robots: { index: false, follow: false } }
 import { AffiliatesTable } from './affiliates-table'
 import { InviteCodesTable } from './invite-codes'
 

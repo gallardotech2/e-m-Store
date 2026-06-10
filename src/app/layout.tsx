@@ -10,9 +10,36 @@ const roboto = Roboto({
   variable: '--font-roboto',
 })
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+
 export const metadata: Metadata = {
-  title: 'e-m Store - Tu Tienda Online en Bolivia',
-  description: 'Lo quieres, lo tienes · Envíos a todo Bolivia',
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: 'e-m Store — Perfiles de streaming legales en Bolivia',
+    template: '%s | e-m Store',
+  },
+  description:
+    'Descubre cómo tener tu perfil exclusivo de streaming pagando desde 30 bolivianos. Acceso único con PIN personal, calidad 4K, 100% legal. Ahorra más del 60%.',
+  openGraph: {
+    title: 'e-m Store — Perfiles de streaming legales en Bolivia',
+    description:
+      'Descubre cómo tener tu perfil exclusivo de streaming pagando desde 30 bolivianos. Acceso único con PIN, calidad 4K, 100% legal. Ahorra más del 60%.',
+    siteName: 'e-m store',
+    locale: 'es_BO',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'e-m Store — Perfiles de streaming legales en Bolivia',
+    description:
+      'Perfiles individuales de streaming desde 30 Bs. Ahorra más del 60%. Acceso exclusivo con PIN.',
+  },
+  icons: {
+    icon: '/favicon.ico',
+  },
+  other: {
+    'theme-color': '#1a1a2e',
+  },
 }
 
 export default function RootLayout({

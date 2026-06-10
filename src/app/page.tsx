@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { BannerCarousel } from '@/components/store/banner-carousel'
 import { CategoryTags } from '@/components/store/category-tags'
@@ -8,6 +9,20 @@ import { SearchResults } from '@/components/store/search-results'
 import { BottomNav } from '@/components/store/bottom-nav'
 import { ModalWrapper } from '@/components/store/modal-wrapper'
 import { Product } from '@/types'
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+
+export const metadata: Metadata = {
+  title: 'e-m Store — Perfiles de streaming legales en Bolivia',
+  description:
+    'Descubre cómo tener tu perfil exclusivo de streaming pagando desde 30 bolivianos. Acceso único con PIN personal, calidad 4K, 100% legal. Ahorra más del 60%.',
+  openGraph: {
+    title: 'e-m Store — Perfiles de streaming legales en Bolivia',
+    description:
+      'Descubre cómo tener tu perfil exclusivo de streaming pagando desde 30 bolivianos. Acceso único con PIN, calidad 4K, 100% legal. Ahorra más del 60%.',
+    url: siteUrl,
+  },
+}
 
 interface PageProps {
   searchParams: Promise<{ buscar?: string; cat?: string; a?: string; todo?: string }>
@@ -51,8 +66,29 @@ export default async function HomePage({ searchParams }: PageProps) {
     }
   }
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'e-m store',
+    description:
+      'Perfiles de streaming legales en Bolivia. Acceso exclusivo con PIN personal, calidad 4K.',
+    url: siteUrl,
+    offers: {
+      '@type': 'AggregateOffer',
+      priceCurrency: 'BOB',
+      priceRange: '30-33',
+      description: 'Perfiles individuales de streaming desde 30 bolivianos',
+    },
+  }
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+        }}
+      />
       {!buscar && <BannerCarousel banners={banners} categories={categories} />}
       <main className="flex-1">
         {buscar ? (
