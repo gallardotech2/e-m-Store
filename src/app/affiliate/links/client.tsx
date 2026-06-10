@@ -207,7 +207,6 @@ export function AffiliateLinksClient({
           <TableHeader>
             <TableRow>
               <TableHead>Código</TableHead>
-              <TableHead>Clics</TableHead>
               <TableHead>Fecha</TableHead>
               <TableHead>Acciones</TableHead>
             </TableRow>
@@ -215,7 +214,7 @@ export function AffiliateLinksClient({
           <TableBody>
             {links.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
                   No tienes códigos aún. Genera tu primer código.
                 </TableCell>
               </TableRow>
@@ -223,7 +222,6 @@ export function AffiliateLinksClient({
               links.map((link) => (
                 <TableRow key={link.id}>
                   <TableCell className="font-mono text-sm font-medium">{link.codigo_unico}</TableCell>
-                  <TableCell>{link.clicks}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {new Date(link.created_at).toLocaleDateString()}
                   </TableCell>
