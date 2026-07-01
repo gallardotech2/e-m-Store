@@ -1,8 +1,0 @@
--- ESTADO: EJECUTADO 
--- ============================================================
--- E-M STORE V2.0 — Archivo de Ejecución SQL
--- ============================================================
--- Acá SOLO va SQL pendiente de ejecutar en el Dashboard.
--- Si ESTADO: EJECUTADO → no lleva SQL adentro.
--- Si ESTADO: PENDIENTE → lleva SQL listo para pegar en Dashboard.
--- ============================================================

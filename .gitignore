@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.local.example
 
 # vercel
 .vercel
@@ -39,3 +40,26 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local dev config
+AGENTS.md
+CLAUDE.md
+PRE_PRODUCTION.md
+REPARACIONES-*.md
+REPORTE-*.md
+
+# opencode
+.opencode/
+
+# supabase migrations (se ejecutan manualmente en Dashboard)
+supabase/
+
+# starter default SVGs (no se usan en la app)
+public/file.svg
+public/globe.svg
+public/next.svg
+public/vercel.svg
+public/window.svg
+
+# local docs
+README.md
