@@ -10,7 +10,8 @@ import { BottomNav } from '@/components/store/bottom-nav'
 import { ModalWrapper } from '@/components/store/modal-wrapper'
 import { Product } from '@/types'
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+const raw = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+const siteUrl = raw.startsWith('http') ? raw : `https://${raw}`
 
 export const metadata: Metadata = {
   title: 'e-m Store — Perfiles de streaming legales en Bolivia',
@@ -49,6 +50,9 @@ export default async function HomePage({ searchParams }: PageProps) {
   const featured = featuredResult.data ?? []
   const allProducts = productsResult.data ?? []
 
+  const hasCriticalError = categoriesResult.error && productsResult.error
+  const hasPartialError = !hasCriticalError && (categoriesResult.error || bannersResult.error || featuredResult.error || productsResult.error)
+
   const buscar = sp.buscar?.trim() ?? ''
 
   let searchResults: Product[] = []
@@ -81,8 +85,24 @@ export default async function HomePage({ searchParams }: PageProps) {
     },
   }
 
+  if (hasCriticalError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-4">
+        <p className="text-gray-600 text-lg">Algo salió mal al cargar la tienda</p>
+        <a href="/" className="bg-red-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-red-700 transition-colors">
+          Intentar de nuevo
+        </a>
+      </div>
+    )
+  }
+
   return (
     <>
+      {hasPartialError && (
+        <div className="bg-amber-50 border-b border-amber-200 text-amber-800 px-4 py-2.5 text-sm text-center">
+          Algunos elementos no se cargaron correctamente.
+        </div>
+      )}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+const raw = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+const siteUrl = raw.startsWith('http') ? raw : `https://${raw}`
 
 export default function robots(): MetadataRoute.Robots {
   return {
