@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/auth-utils'
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false } }
 import { ConfigForm } from './config-form'
 
 export default async function AdminConfigPage() {
-  const supabase = await createClient()
+  const { user, supabase } = await requireAdmin()
+  if (!user || !supabase) return <p className="text-center text-muted-foreground py-8">No autorizado</p>
 
   const { data: configs } = await supabase.from('system_config').select('clave, valor')
 

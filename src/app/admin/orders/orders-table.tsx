@@ -2,20 +2,13 @@
 
 import { useRouter } from 'next/navigation'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { DataTable, type Column } from '@/components/ui/data-table'
 import { createClient } from '@/lib/supabase/client'
 import { formatPrice } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -61,73 +54,77 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
     }
   }
 
+  const columns: Column<Order>[] = [
+    {
+      header: 'Pedido',
+      accessorKey: 'id',
+      sortable: true,
+      cell: (o) => (
+        <>
+          <span className="font-mono text-xs">#{o.id}</span>
+          <br />
+          <span className="text-muted-foreground text-xs">
+            {new Date(o.created_at).toLocaleDateString()}
+          </span>
+        </>
+      ),
+    },
+    {
+      header: 'Cliente',
+      accessorKey: 'cliente_nombre',
+      searchable: true,
+      cell: (o) => (
+        <>
+          <div className="font-medium">{o.cliente_nombre ?? '—'}</div>
+          <div className="text-xs text-muted-foreground">{o.telefono_cliente ?? '—'}</div>
+        </>
+      ),
+    },
+    {
+      header: 'Producto',
+      cell: (o) => <>{o.products?.nombre ?? '—'}</>,
+    },
+    { header: 'Cant.', accessorKey: 'cantidad' },
+    {
+      header: 'Total',
+      accessorKey: 'total',
+      sortable: true,
+      cell: (o) => <span className="font-bold">Bs {formatPrice(Number(o.total))}</span>,
+    },
+    { header: 'Pago', accessorKey: 'metodo_pago' },
+    {
+      header: 'Afiliado',
+      cell: (o) => <span className="text-sm">{o.profiles?.nombre ?? '—'}</span>,
+    },
+    {
+      header: 'Estado',
+      cell: (o) => (
+        <Select
+          key={`${o.id}-${o.estado}`}
+          defaultValue={o.estado}
+          onValueChange={(v) => handleStatusChange(o.id, v ?? 'pendiente', o.estado)}
+        >
+          <SelectTrigger className={`w-32 text-xs font-medium ${statusColors[o.estado] ?? ''}`}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="pendiente">Pendiente</SelectItem>
+            <SelectItem value="enviado">Enviado</SelectItem>
+            <SelectItem value="completado">Completado</SelectItem>
+            <SelectItem value="cancelado">Cancelado</SelectItem>
+          </SelectContent>
+        </Select>
+      ),
+    },
+  ]
+
   return (
-    <div className="border rounded-lg overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Pedido</TableHead>
-            <TableHead>Cliente</TableHead>
-            <TableHead>Producto</TableHead>
-            <TableHead>Cant.</TableHead>
-            <TableHead>Total</TableHead>
-            <TableHead>Pago</TableHead>
-            <TableHead>Afiliado</TableHead>
-            <TableHead>Estado</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {orders.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                Sin pedidos
-              </TableCell>
-            </TableRow>
-          ) : (
-            orders.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell className="font-mono text-xs">
-                  #{order.id}
-                  <br />
-                  <span className="text-muted-foreground">
-                    {new Date(order.created_at).toLocaleDateString()}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <div className="font-medium">{order.cliente_nombre ?? '—'}</div>
-                  <div className="text-xs text-muted-foreground">{order.telefono_cliente ?? '—'}</div>
-                </TableCell>
-                <TableCell>{order.products?.nombre ?? '—'}</TableCell>
-                <TableCell>{order.cantidad}</TableCell>
-                <TableCell className="font-bold">
-                  Bs {formatPrice(Number(order.total))}
-                </TableCell>
-                <TableCell className="text-sm">{order.metodo_pago ?? '—'}</TableCell>
-                <TableCell className="text-sm">
-                  {order.profiles?.nombre ?? '—'}
-                </TableCell>
-                <TableCell>
-                  <Select
-                    key={`${order.id}-${order.estado}`}
-                    defaultValue={order.estado}
-                    onValueChange={(v) => handleStatusChange(order.id, v ?? 'pendiente', order.estado)}
-                  >
-                    <SelectTrigger className={`w-32 text-xs font-medium ${statusColors[order.estado] ?? ''}`}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pendiente">Pendiente</SelectItem>
-                      <SelectItem value="enviado">Enviado</SelectItem>
-                      <SelectItem value="completado">Completado</SelectItem>
-                      <SelectItem value="cancelado">Cancelado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+    <DataTable
+      columns={columns}
+      data={orders}
+      pageSize={10}
+      searchPlaceholder="Buscar por cliente..."
+      emptyMessage="Sin pedidos"
+    />
   )
 }

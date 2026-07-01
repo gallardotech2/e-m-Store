@@ -6,7 +6,10 @@ export interface Profile {
   email: string
   telefono: string | null
   codigo_pais: string
+  codigo_corto: string | null
+  codigo_afiliado: string | null
   rol: Rol
+  status: 'pendiente' | 'aprobado' | 'rechazado'
   activo: boolean
   fecha_registro: string
   ultimo_acceso: string | null

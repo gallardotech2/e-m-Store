@@ -29,7 +29,7 @@ export function CategoriesModal({ categories }: { categories: Category[] }) {
             <Tags className="h-5 w-5 text-red-600" />
             <h2 className="text-lg font-bold text-gray-900">Categorías</h2>
           </div>
-          <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
+          <button onClick={closeModal} aria-label="Cerrar" className="text-gray-400 hover:text-gray-600">
             <X className="h-5 w-5" />
           </button>
         </div>

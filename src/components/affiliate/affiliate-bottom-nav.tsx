@@ -7,7 +7,7 @@ import { LayoutDashboard, Link2, ShoppingCart, User } from 'lucide-react'
 const links = [
   { href: '/affiliate', icon: LayoutDashboard, label: 'Panel' },
   { href: '/affiliate/links', icon: Link2, label: 'Links' },
-  { href: '/affiliate/orders', icon: ShoppingCart, label: 'Pedidos' },
+  { href: '/affiliate/orders', icon: ShoppingCart, label: 'Ventas' },
   { href: '/affiliate/profile', icon: User, label: 'Perfil' },
 ]
 

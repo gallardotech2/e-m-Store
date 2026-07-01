@@ -5,14 +5,6 @@ import { Pencil, Trash2 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -22,6 +14,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { DataTable, type Column } from '@/components/ui/data-table'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -123,7 +117,6 @@ export function ProductsTable({ products }: { products: Product[] }) {
   const supabase = createClient()
 
   async function handleDelete(id: number) {
-    if (!confirm('¿Eliminar producto?')) return
     const { error } = await supabase.from('products').update({ activo: false }).eq('id', id)
     if (error) toast.error(error.message)
     else {
@@ -138,65 +131,68 @@ export function ProductsTable({ products }: { products: Product[] }) {
     }
   }
 
+  const columns: Column<Product>[] = [
+    {
+      header: 'Imagen',
+      cell: (p) =>
+        p.imagen_url ? (
+          <Image src={p.imagen_url} alt={p.nombre} width={45} height={45} className="rounded object-cover" />
+        ) : (
+          <div className="w-[45px] h-[45px] bg-gray-200 rounded" />
+        ),
+    },
+    { header: 'Producto', accessorKey: 'nombre', sortable: true, searchable: true },
+    {
+      header: 'Precio',
+      accessorKey: 'precio',
+      sortable: true,
+      cell: (p) => <span className="text-red-600 font-bold">Bs {formatPrice(p.precio)}</span>,
+    },
+    {
+      header: 'Inventario',
+      accessorKey: 'stock',
+      sortable: true,
+      cell: (p) => (
+        <span
+          className={`px-2 py-1 rounded text-xs font-medium ${p.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}
+        >
+          {p.stock}
+        </span>
+      ),
+    },
+    {
+      header: 'Duración',
+      accessorKey: 'duracion',
+      sortable: true,
+      cell: (p) => <span className="text-sm text-muted-foreground">{p.duracion} días</span>,
+    },
+    {
+      header: 'Acciones',
+      cell: (p) => (
+        <div className="flex gap-1">
+          <EditDialog product={p} />
+          <ConfirmDialog
+            title="Eliminar Producto"
+            description="¿Estás seguro de eliminar este producto?"
+            confirmText="Eliminar"
+            onConfirm={() => handleDelete(p.id)}
+          >
+            <Button variant="ghost" size="icon" className="text-red-600">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </ConfirmDialog>
+        </div>
+      ),
+    },
+  ]
+
   return (
-    <div className="border rounded-lg overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Imagen</TableHead>
-            <TableHead>Producto</TableHead>
-            <TableHead>Precio</TableHead>
-            <TableHead>Inventario</TableHead>
-            <TableHead>Duración</TableHead>
-            <TableHead>Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {products.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                Sin productos
-              </TableCell>
-            </TableRow>
-          ) : (
-            products.map((product) => (
-              <TableRow key={product.id}>
-                <TableCell>
-                  {product.imagen_url ? (
-                    <Image
-                      src={product.imagen_url}
-                      alt={product.nombre}
-                      width={45}
-                      height={45}
-                      className="rounded object-cover"
-                    />
-                  ) : (
-                    <div className="w-[45px] h-[45px] bg-gray-200 rounded" />
-                  )}
-                </TableCell>
-                <TableCell className="font-medium">{product.nombre}</TableCell>
-                <TableCell className="text-red-600 font-bold">
-                  Bs {formatPrice(product.precio)}
-                </TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${product.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                    {product.stock}
-                  </span>
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {product.duracion} días
-                </TableCell>
-                <TableCell className="flex gap-1">
-                  <EditDialog product={product} />
-                  <Button variant="ghost" size="icon" className="text-red-600" onClick={() => handleDelete(product.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+    <DataTable
+      columns={columns}
+      data={products}
+      pageSize={10}
+      searchPlaceholder="Buscar producto..."
+      emptyMessage="Sin productos"
+    />
   )
 }

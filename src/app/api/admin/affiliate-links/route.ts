@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { affiliateActionSchema } from '@/lib/validations/api'
 import { validateOrigin } from '@/lib/csrf'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { logAdminAction } from '@/lib/audit'
+import { z } from 'zod'
+
+const createLinkSchema = z.object({
+  affiliate_id: z.string().uuid('ID de afiliado inválido'),
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,55 +29,44 @@ export async function POST(request: NextRequest) {
     }
 
     if (user.app_metadata?.rol !== 'admin') {
-      return NextResponse.json({ error: 'Solo administradores pueden modificar afiliados' }, { status: 403 })
+      return NextResponse.json({ error: 'Solo administradores' }, { status: 403 })
     }
 
     const body = await request.json()
-    const parsed = affiliateActionSchema.safeParse(body)
+    const parsed = createLinkSchema.safeParse(body)
 
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
     }
 
-    const { action, affiliate_id } = parsed.data
+    const code = `AF-${parsed.data.affiliate_id.slice(0, 8)}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`
     const adminSupabase = createAdminClient()
 
-    const { data: oldProfile } = await adminSupabase
-      .from('profiles')
-      .select('status, rol')
-      .eq('id', affiliate_id)
+    const { data, error } = await adminSupabase
+      .from('affiliate_links')
+      .insert({ afiliado_id: parsed.data.affiliate_id, codigo_unico: code })
+      .select('codigo_unico')
       .single()
 
-    if (!oldProfile || oldProfile.rol !== 'afiliado') {
-      return NextResponse.json({ error: 'Afiliado no encontrado' }, { status: 404 })
-    }
-
-    const { error } = await adminSupabase
-      .from('profiles')
-      .update({ status: action })
-      .eq('id', affiliate_id)
-
     if (error) {
-      console.error('Error actualizando afiliado:', error)
-      return NextResponse.json({ error: 'Error al actualizar afiliado' }, { status: 500 })
+      return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
       ?? request.headers.get('x-real-ip')
 
     await logAdminAction(adminSupabase, {
-      accion: 'update',
-      tabla: 'profiles',
-      registro_id: affiliate_id,
-      datos_previos: oldProfile ? { status: oldProfile.status } : null,
-      datos_nuevos: { status: action },
+      accion: 'create',
+      tabla: 'affiliate_links',
+      registro_id: parsed.data.affiliate_id,
+      datos_nuevos: { codigo_unico: code },
       adminId: user.id,
       ip_address: ip ?? undefined,
     })
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, codigo_unico: data.codigo_unico })
   } catch (e) {
-    console.error('Error en POST /api/admin/affiliates:', e)
+    console.error('Error en POST /api/admin/affiliate-links:', e)
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }

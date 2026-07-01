@@ -16,32 +16,28 @@ const DEFAULT_MESSAGE = `¡Hola! 🚀
 ¡Listo para pagar ya mismo! ⚡
 Gracias por confiar en nosotros 💙`
 
-export function useWhatsApp() {
-  function buildWhatsAppUrl(telefono: string, mensaje: string): string {
-    const cleanPhone = telefono.replace(/[^0-9]/g, '')
-    const fullNumber = `${WHATSAPP_PREFIX}${cleanPhone}`
-    return `https://wa.me/${fullNumber}?text=${encodeURIComponent(mensaje)}`
-  }
+export function buildWhatsAppUrl(telefono: string, mensaje: string): string {
+  const cleanPhone = telefono.replace(/[^0-9]/g, '')
+  const fullNumber = `${WHATSAPP_PREFIX}${cleanPhone}`
+  return `https://wa.me/${fullNumber}?text=${encodeURIComponent(mensaje)}`
+}
 
-  function buildPurchaseMessage(params: {
-    producto: string
-    precio: number
-    cliente: string
-    metodoPago: string
-    orderId?: number
-    template?: string | null
-  }): string {
-    const template = params.template || DEFAULT_MESSAGE
+export function buildPurchaseMessage(params: {
+  producto: string
+  precio: number
+  cliente: string
+  metodoPago: string
+  orderId?: number
+  template?: string | null
+}): string {
+  const template = params.template || DEFAULT_MESSAGE
 
-    const message = template
-      .replace(/\{producto\}/g, params.producto)
-      .replace(/\{precio\}/g, formatPrice(params.precio))
-      .replace(/\{cliente\}/g, params.cliente)
-      .replace(/\{metodoPago\}/g, params.metodoPago)
-      .replace(/\{orderId\}/g, params.orderId?.toString() ?? '')
+  const message = template
+    .replace(/\{producto\}/g, params.producto)
+    .replace(/\{precio\}/g, formatPrice(params.precio))
+    .replace(/\{cliente\}/g, params.cliente)
+    .replace(/\{metodoPago\}/g, params.metodoPago)
+    .replace(/\{orderId\}/g, params.orderId?.toString() ?? '')
 
-    return message
-  }
-
-  return { buildWhatsAppUrl, buildPurchaseMessage }
+  return message
 }

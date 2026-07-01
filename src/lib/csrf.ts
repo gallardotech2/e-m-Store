@@ -6,6 +6,10 @@ export function validateOrigin(request: Request) {
 
   try {
     const originUrl = new URL(origin)
+
+    const isDev = process.env.NODE_ENV === 'development'
+    if (!isDev && originUrl.protocol !== 'https:') return false
+
     return originUrl.host === host
   } catch {
     return false

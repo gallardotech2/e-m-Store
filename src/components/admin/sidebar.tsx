@@ -3,16 +3,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  LayoutDashboard,
-  Package,
-  Tags,
-  Image,
-  Users,
-  ShoppingCart,
-  Settings,
-  LogOut,
-  Store,
-  Star,
+  LayoutDashboard, Package, Tags, Image, Users,
+  ShoppingCart, Settings, LogOut, Store, Star,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
@@ -42,45 +34,48 @@ export function AdminSidebar() {
 
   return (
     <aside className="w-64 bg-[#1a1a2e] text-white min-h-screen flex flex-col">
-      <div className="p-4 text-center border-b border-white/10">
-        <h2 className="text-xl font-black">e-m Store</h2>
-        <p className="text-xs text-white/60">Panel Admin</p>
+      <div className="p-5 text-center border-b border-white/10">
+        <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-indigo-600 flex items-center justify-center text-lg font-bold">
+          e
+        </div>
+        <h2 className="text-base font-bold">e-m Store</h2>
+        <p className="text-[11px] text-white/50">Panel Administrativo</p>
       </div>
 
-      <nav className="flex-1 p-3 space-y-1">
+      <nav className="flex-1 p-3 space-y-0.5">
         {links.map((link) => {
           const isActive = pathname === link.href
           return (
             <Link
               key={link.href}
               href={link.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
                 isActive
-                  ? 'bg-red-600 text-white'
-                  : 'text-white/70 hover:text-white hover:bg-white/10'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-white/60 hover:text-white hover:bg-white/10'
               }`}
             >
-              <link.icon className="h-5 w-5" />
+              <link.icon className="h-5 w-5 shrink-0" />
               {link.label}
             </Link>
           )
         })}
       </nav>
 
-      <div className="p-3 border-t border-white/10 space-y-2">
+      <div className="p-3 border-t border-white/10 space-y-1">
         <Link
           href="/"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/10 transition-all duration-200"
         >
-          <Store className="h-5 w-5" />
+          <Store className="h-5 w-5 shrink-0" />
           Ver Tienda
         </Link>
         <Button
           variant="ghost"
-          className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10"
+          className="w-full justify-start text-white/60 hover:text-white hover:bg-white/10"
           onClick={handleLogout}
         >
-          <LogOut className="h-5 w-5 mr-3" />
+          <LogOut className="h-5 w-5 shrink-0 mr-3" />
           Cerrar Sesión
         </Button>
       </div>

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { profileUpdateSchema } from '@/lib/validations/auth'
 
 interface Profile {
   id: string
@@ -29,9 +30,16 @@ export function ProfileForm({ profile }: { profile: Profile | null }) {
     const nombre = form.get('nombre') as string
     const telefono = form.get('telefono') as string
 
+    const parsed = profileUpdateSchema.safeParse({ nombre, telefono: telefono || undefined })
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0].message)
+      setLoading(false)
+      return
+    }
+
     const { error } = await supabase
       .from('profiles')
-      .update({ nombre, telefono: telefono || null })
+      .update(parsed.data)
       .eq('id', profile?.id)
 
     if (error) toast.error(error.message)
@@ -58,7 +66,7 @@ export function ProfileForm({ profile }: { profile: Profile | null }) {
             </div>
             <div className="space-y-2">
               <Label>Correo electrónico</Label>
-              <Input value={profile?.email ?? ''} disabled className="bg-gray-100" />
+              <Input defaultValue={profile?.email ?? ''} disabled className="bg-gray-100" />
               <p className="text-xs text-muted-foreground">El email no se puede cambiar</p>
             </div>
             <div className="space-y-2">

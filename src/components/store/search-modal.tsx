@@ -30,7 +30,7 @@ export function SearchModal() {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-gray-900">Buscar producto</h2>
-          <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
+          <button onClick={closeModal} aria-label="Cerrar" className="text-gray-400 hover:text-gray-600">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -41,6 +41,7 @@ export function SearchModal() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Escribe el nombre del producto..."
+            aria-label="Buscar producto"
             className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
           />
           <button

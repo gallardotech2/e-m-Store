@@ -1,4 +1,10 @@
-const ipMap = new Map<string, { count: number; resetAt: number }>()
+import { LRUCache } from 'lru-cache'
+
+const ipCache = new LRUCache<string, { count: number; resetAt: number }>({
+  max: 10000,
+  ttl: 60_000,
+  ttlAutopurge: true,
+})
 
 function buildHeaders(max: number, remaining: number, resetAt: number): Record<string, string> {
   return {
@@ -17,15 +23,10 @@ export async function checkRateLimit(
     ?? 'unknown'
 
   const now = Date.now()
-
-  for (const [key, entry] of ipMap) {
-    if (now > entry.resetAt) ipMap.delete(key)
-  }
-
-  const entry = ipMap.get(ip)
+  const entry = ipCache.get(ip)
 
   if (!entry || now > entry.resetAt) {
-    ipMap.set(ip, { count: 1, resetAt: now + windowMs })
+    ipCache.set(ip, { count: 1, resetAt: now + windowMs })
     return {
       rateLimited: false,
       headers: buildHeaders(max, max - 1, now + windowMs),

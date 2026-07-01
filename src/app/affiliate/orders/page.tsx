@@ -21,7 +21,7 @@ export default async function AffiliateOrdersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Mis Pedidos</h1>
+      <h1 className="text-2xl font-bold mb-6">Mis Ventas</h1>
       <AffiliateOrdersTable orders={orders ?? []} />
     </div>
   )

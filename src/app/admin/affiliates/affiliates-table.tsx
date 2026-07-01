@@ -6,14 +6,7 @@ import { Button } from '@/components/ui/button'
 import { formatPrice } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { DataTable, type Column } from '@/components/ui/data-table'
 import {
   Dialog,
   DialogContent,
@@ -40,17 +33,17 @@ function ActionButtons({ affiliate, onAction }: { affiliate: Affiliate, onAction
   if (affiliate.status === 'aprobado') {
     return (
       <div className="flex gap-1">
-        <Button 
-          size="sm" 
-          variant="outline" 
+        <Button
+          size="sm"
+          variant="outline"
           className="text-yellow-600 border-yellow-600 hover:bg-yellow-50"
           onClick={() => onAction(affiliate.id, 'pendiente')}
         >
           Revocar
         </Button>
-        <Button 
-          size="sm" 
-          variant="outline" 
+        <Button
+          size="sm"
+          variant="outline"
           className="text-red-600 border-red-600 hover:bg-red-50"
           onClick={() => onAction(affiliate.id, 'rechazado')}
         >
@@ -59,21 +52,21 @@ function ActionButtons({ affiliate, onAction }: { affiliate: Affiliate, onAction
       </div>
     )
   }
-  
+
   if (affiliate.status === 'rechazado') {
     return (
       <div className="flex gap-1">
-        <Button 
-          size="sm" 
-          variant="outline" 
+        <Button
+          size="sm"
+          variant="outline"
           className="text-green-600 border-green-600 hover:bg-green-50"
           onClick={() => onAction(affiliate.id, 'aprobado')}
         >
           Aprobar
         </Button>
-        <Button 
-          size="sm" 
-          variant="outline" 
+        <Button
+          size="sm"
+          variant="outline"
           className="text-yellow-600 border-yellow-600 hover:bg-yellow-50"
           onClick={() => onAction(affiliate.id, 'pendiente')}
         >
@@ -85,17 +78,17 @@ function ActionButtons({ affiliate, onAction }: { affiliate: Affiliate, onAction
 
   return (
     <div className="flex gap-1">
-      <Button 
-        size="sm" 
-        variant="outline" 
+      <Button
+        size="sm"
+        variant="outline"
         className="text-green-600 border-green-600 hover:bg-green-50"
         onClick={() => onAction(affiliate.id, 'aprobado')}
       >
         Aprobar
       </Button>
-      <Button 
-        size="sm" 
-        variant="outline" 
+      <Button
+        size="sm"
+        variant="outline"
         className="text-red-600 border-red-600 hover:bg-red-50"
         onClick={() => onAction(affiliate.id, 'rechazado')}
       >
@@ -107,27 +100,35 @@ function ActionButtons({ affiliate, onAction }: { affiliate: Affiliate, onAction
 
 function GenerateLinkDialog({ affiliate }: { affiliate: Affiliate }) {
   const router = useRouter()
-  const supabase = createClient()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [generatedCode, setGeneratedCode] = useState('')
 
   async function handleGenerate() {
     setLoading(true)
-    const code = `AF-${affiliate.id.slice(0, 8)}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`
-    const { error } = await supabase.from('affiliate_links').insert({
-      afiliado_id: affiliate.id,
-      codigo_unico: code,
-    })
 
-    if (error) {
-      toast.error(error.message)
-    } else {
-      setGeneratedCode(code)
+    try {
+      const res = await fetch('/api/admin/affiliate-links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ affiliate_id: affiliate.id }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        toast.error(err.error ?? 'Error al generar')
+        return
+      }
+
+      const data = await res.json()
+      setGeneratedCode(data.codigo_unico)
       toast.success('Código generado')
       router.refresh()
+    } catch {
+      toast.error('Error de conexión')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
@@ -174,11 +175,11 @@ export function AffiliatesTable({ affiliates }: { affiliates: Affiliate[] }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, affiliate_id: id }),
       })
-      
+
       if (!response.ok) {
         throw new Error('Error al actualizar')
       }
-      
+
       toast.success(`Afiliado ${action === 'aprobado' ? 'aprobado' : 'rechazado'}`)
       router.refresh()
     } catch {
@@ -188,56 +189,52 @@ export function AffiliatesTable({ affiliates }: { affiliates: Affiliate[] }) {
     }
   }
 
+  const columns: Column<Affiliate>[] = [
+    { header: 'Nombre', accessorKey: 'nombre', sortable: true, searchable: true },
+    { header: 'Correo', accessorKey: 'email', sortable: true, searchable: true },
+    { header: 'Teléfono', accessorKey: 'telefono', searchable: true },
+    {
+      header: 'Estado',
+      cell: (a) =>
+        loading === a.id ? (
+          <span className="text-xs text-muted-foreground">Actualizando...</span>
+        ) : (
+          <ActionButtons affiliate={a} onAction={handleAction} />
+        ),
+    },
+    {
+      header: 'Enlaces',
+      cell: (a) => <>{a.affiliate_links?.[0]?.count ?? 0}</>,
+    },
+    {
+      header: 'Ventas (Bs)',
+      accessorKey: 'total_comisiones',
+      sortable: true,
+      cell: (a) => <span className="text-green-600 font-bold">Bs {formatPrice(a.total_comisiones)}</span>,
+    },
+    {
+      header: 'Registro',
+      accessorKey: 'fecha_registro',
+      sortable: true,
+      cell: (a) => (
+        <span className="text-sm text-muted-foreground">
+          {new Date(a.fecha_registro).toLocaleDateString('es-BO')}
+        </span>
+      ),
+    },
+    {
+      header: 'Acción',
+      cell: (a) => <GenerateLinkDialog affiliate={a} />,
+    },
+  ]
+
   return (
-    <div className="border rounded-lg overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nombre</TableHead>
-            <TableHead>Correo</TableHead>
-            <TableHead>Teléfono</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead>Enlaces</TableHead>
-            <TableHead>Ventas (Bs)</TableHead>
-            <TableHead>Registro</TableHead>
-            <TableHead>Acción</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {affiliates.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                Sin afiliados
-              </TableCell>
-            </TableRow>
-          ) : (
-            affiliates.map((aff) => (
-              <TableRow key={aff.id}>
-                <TableCell className="font-medium">{aff.nombre}</TableCell>
-                <TableCell>{aff.email}</TableCell>
-                <TableCell>{aff.telefono ?? '—'}</TableCell>
-                <TableCell>
-                  {loading === aff.id ? (
-                    <span className="text-xs text-muted-foreground">Actualizando...</span>
-                  ) : (
-                    <ActionButtons affiliate={aff} onAction={handleAction} />
-                  )}
-                </TableCell>
-                <TableCell>{aff.affiliate_links?.[0]?.count ?? 0}</TableCell>
-                <TableCell className="text-green-600 font-bold">
-                  Bs {formatPrice(aff.total_comisiones)}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {new Date(aff.fecha_registro).toLocaleDateString('es-BO')}
-                </TableCell>
-                <TableCell>
-                  <GenerateLinkDialog affiliate={aff} />
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+    <DataTable
+      columns={columns}
+      data={affiliates}
+      pageSize={10}
+      searchPlaceholder="Buscar afiliado..."
+      emptyMessage="Sin afiliados"
+    />
   )
 }

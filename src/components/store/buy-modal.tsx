@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/dialog'
 import { useBuyModal } from '@/hooks/use-buy-modal'
 import { useAffiliate } from '@/hooks/use-affiliate'
-import { useWhatsApp } from '@/lib/whatsapp-utils'
+import { buildWhatsAppUrl, buildPurchaseMessage } from '@/lib/whatsapp-utils'
 import { useSystemConfigStore } from '@/hooks/use-system-config'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
@@ -29,7 +29,7 @@ import { formatPrice } from '@/lib/utils'
 export function BuyModal() {
   const { isOpen, product, closeModal } = useBuyModal()
   const { afiliadoId } = useAffiliate()
-  const { buildWhatsAppUrl, buildPurchaseMessage } = useWhatsApp()
+  
   const { mensajeConfirmacion, setMensajeConfirmacion } = useSystemConfigStore()
   const router = useRouter()
   const [cliente, setCliente] = useState('')
@@ -98,10 +98,7 @@ export function BuyModal() {
         return
       }
 
-      const phoneRes = await fetch(`/api/affiliates/phone?id=${afiliadoId}`)
-      const phoneData = await phoneRes.json()
-
-      if (!phoneData.telefono) {
+      if (!data.telefono_afiliado) {
         toast.error('No se encontró teléfono del afiliado. Contacta al administrador.')
         setLoading(false)
         return
@@ -116,7 +113,7 @@ export function BuyModal() {
         template: mensajeConfirmacion,
       })
 
-      const waUrl = buildWhatsAppUrl(phoneData.telefono, mensaje)
+      const waUrl = buildWhatsAppUrl(data.telefono_afiliado, mensaje)
       closeModal()
       window.open(waUrl, '_blank')
       router.refresh()
@@ -188,6 +185,11 @@ export function BuyModal() {
                   Bs {formatPrice(product.precio_original ?? 0)}
                 </span>
               )}
+            </div>
+            <div className="mt-1">
+              <span className="inline-flex items-center text-[11px] font-semibold text-red-600 bg-red-50 px-2.5 py-1 rounded-full border border-red-100">
+                {product.duracion} días de duración
+              </span>
             </div>
           </div>
         </div>

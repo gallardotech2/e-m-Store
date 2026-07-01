@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { validateOrigin } from '@/lib/csrf'
 import { checkRateLimit } from '@/lib/rate-limit'
 
@@ -51,9 +50,7 @@ export async function POST(request: Request) {
 
     const ext = file.name.split('.').pop() ?? 'jpg'
     const fileName = `${Date.now()}_${crypto.randomUUID()}.${ext}`
-    const adminSupabase = createAdminClient()
-
-    const { error: uploadError } = await adminSupabase.storage
+    const { error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(fileName, file, {
         contentType: file.type,
@@ -64,10 +61,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Error al subir imagen' }, { status: 500 })
     }
 
-    const { data: urlData } = adminSupabase.storage.from(bucket).getPublicUrl(fileName)
+    const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fileName)
 
     return NextResponse.json({ url: urlData.publicUrl })
   } catch {
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
+}
+
+export async function GET() {
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
+}
+
+export async function PUT() {
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
+}
+
+export async function PATCH() {
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
+}
+
+export async function DELETE() {
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
 }

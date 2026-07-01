@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { resolveAffiliateId } from '@/lib/affiliate-utils'
 import { orderSchema } from '@/lib/validations/api'
 import { validateOrigin } from '@/lib/csrf'
@@ -41,7 +42,8 @@ export async function POST(request: Request) {
 
     const total = product.precio * cantidad
 
-    const { data, error } = await supabase
+    const adminSupabase = createAdminClient()
+    const { data: newOrder, error: insertError } = await adminSupabase
       .from('orders')
       .insert({
         producto_id,
@@ -57,14 +59,47 @@ export async function POST(request: Request) {
       .select('id')
       .single()
 
-    if (error) {
-      console.error('Error creando orden:', error)
-      return NextResponse.json({ error: 'Error al crear la orden' }, { status: 500 })
+    if (insertError || !newOrder) {
+      console.error('Error creando orden:', JSON.stringify(insertError, null, 2))
+      return NextResponse.json({ error: `Error al crear la orden: ${insertError?.message ?? 'Error desconocido'}` }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true, orderId: data.id })
+    let telefono_afiliado = ''
+    let codigo_pais_afiliado = '+591'
+    if (resolvedAfiliadoId) {
+      const { data: affProfile } = await adminSupabase
+        .from('profiles')
+        .select('telefono, codigo_pais')
+        .eq('id', resolvedAfiliadoId)
+        .maybeSingle()
+      telefono_afiliado = affProfile?.telefono ?? ''
+      codigo_pais_afiliado = affProfile?.codigo_pais ?? '+591'
+    }
+
+    return NextResponse.json({
+      success: true,
+      orderId: newOrder.id,
+      telefono_afiliado,
+      codigo_pais_afiliado,
+    })
   } catch (e) {
     console.error('Error en POST /api/orders:', e)
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
+}
+
+export async function GET() {
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
+}
+
+export async function PUT() {
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
+}
+
+export async function PATCH() {
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
+}
+
+export async function DELETE() {
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
 }

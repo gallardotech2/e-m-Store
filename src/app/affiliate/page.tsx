@@ -6,6 +6,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Link2, ShoppingCart, DollarSign, TrendingUp } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import Link from 'next/link'
+import { headers } from 'next/headers'
+import { DashboardCopyLink } from './dashboard-copy-link'
+import { AffiliateOrdersTable } from './orders/orders-table'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,13 +19,20 @@ export default async function AffiliateDashboard() {
   if (!user) return <p>Debes iniciar sesión</p>
 
   const adminSupabase = createAdminClient()
-  const [{ count: linksCount }, { data: orders }] = await Promise.all([
-    authSupabase.from('affiliate_links').select('*', { count: 'exact', head: true }).eq('afiliado_id', user.id),
-    adminSupabase.from('orders').select('total').eq('afiliado_id', user.id),
+  const [{ count: linksCount }, { data: profile }, { data: orders }] = await Promise.all([
+    adminSupabase.from('affiliate_links').select('*', { count: 'exact', head: true }).eq('afiliado_id', user.id),
+    authSupabase.from('profiles').select('codigo_corto, nombre').eq('id', user.id).maybeSingle(),
+    adminSupabase.from('orders').select('*, products(nombre, precio)').eq('afiliado_id', user.id).order('created_at', { ascending: false }),
   ])
+
+  const host = (await headers()).get('host') ?? 'localhost:3000'
+  const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https'
+  const origin = `${protocol}://${host}`
+  const linkUrl = `${origin}/?a=${profile?.codigo_corto ?? ''}`
 
   const totalVentas = orders?.reduce((sum, o) => sum + Number(o.total ?? 0), 0) ?? 0
   const totalPedidos = orders?.length ?? 0
+  const recentOrders = orders?.slice(0, 5) ?? []
 
   const stats = [
     { icon: Link2, label: 'Links', value: linksCount ?? 0, gradient: 'from-blue-500 to-blue-600', href: '/affiliate/links' },
@@ -33,7 +43,7 @@ export default async function AffiliateDashboard() {
 
   const quickActions = [
     { label: '+ Nuevo Link', href: '/affiliate/links', color: 'bg-blue-600 hover:bg-blue-700' },
-    { label: 'Mis Pedidos', href: '/affiliate/orders', color: 'bg-gray-800 hover:bg-gray-900' },
+    { label: 'Mis Ventas', href: '/affiliate/orders', color: 'bg-gray-800 hover:bg-gray-900' },
     { label: 'Ver Tienda', href: '/', color: 'bg-emerald-600 hover:bg-emerald-700', external: true },
   ]
 
@@ -41,7 +51,7 @@ export default async function AffiliateDashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Panel</h1>
-        <p className="text-muted-foreground text-sm">Bienvenido, {user.user_metadata?.nombre ?? user.email}</p>
+        <p className="text-muted-foreground text-sm">Bienvenido, {profile?.nombre ?? user.user_metadata?.nombre ?? user.email}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
@@ -58,6 +68,8 @@ export default async function AffiliateDashboard() {
         ))}
       </div>
 
+      {profile?.codigo_corto && <DashboardCopyLink linkUrl={linkUrl} />}
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {quickActions.map((action) => (
           <Link
@@ -69,6 +81,11 @@ export default async function AffiliateDashboard() {
             {action.label}
           </Link>
         ))}
+      </div>
+
+      <div>
+        <h2 className="text-lg font-bold mb-4">Últimas Ventas</h2>
+        <AffiliateOrdersTable orders={recentOrders} />
       </div>
     </div>
   )

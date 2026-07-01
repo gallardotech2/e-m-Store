@@ -4,14 +4,6 @@ import Image from 'next/image'
 import { Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -20,6 +12,8 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { DataTable, type Column } from '@/components/ui/data-table'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -101,7 +95,6 @@ export function BannersTable({ banners }: { banners: Banner[] }) {
   const supabase = createClient()
 
   async function handleDelete(id: number) {
-    if (!confirm('¿Eliminar banner?')) return
     const { error } = await supabase.from('banners').update({ activo: false }).eq('id', id)
     if (error) toast.error(error.message)
     else {
@@ -116,49 +109,42 @@ export function BannersTable({ banners }: { banners: Banner[] }) {
     }
   }
 
+  const columns: Column<Banner>[] = [
+    {
+      header: 'Imagen',
+      cell: (b) => (
+        <Image src={b.imagen_url} alt={b.titulo ?? 'Imagen de banner'} width={80} height={40} className="rounded object-cover" />
+      ),
+    },
+    { header: 'Título', accessorKey: 'titulo', sortable: true, searchable: true },
+    { header: 'Orden', accessorKey: 'orden', sortable: true },
+    {
+      header: 'Acciones',
+      cell: (b) => (
+        <div className="flex gap-1">
+          <EditDialog banner={b} />
+          <ConfirmDialog
+            title="Eliminar Banner"
+            description="¿Estás seguro de eliminar este banner?"
+            confirmText="Eliminar"
+            onConfirm={() => handleDelete(b.id)}
+          >
+            <Button variant="ghost" size="icon" className="text-red-600">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </ConfirmDialog>
+        </div>
+      ),
+    },
+  ]
+
   return (
-    <div className="border rounded-lg overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Imagen</TableHead>
-            <TableHead>Título</TableHead>
-            <TableHead>Orden</TableHead>
-            <TableHead>Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {banners.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                Sin banners
-              </TableCell>
-            </TableRow>
-          ) : (
-            banners.map((banner) => (
-              <TableRow key={banner.id}>
-                <TableCell>
-                  <Image
-                    src={banner.imagen_url}
-                    alt={banner.titulo ?? 'Imagen de banner'}
-                    width={80}
-                    height={40}
-                    className="rounded object-cover"
-                  />
-                </TableCell>
-                <TableCell className="font-medium">{banner.titulo ?? '—'}</TableCell>
-                <TableCell>{banner.orden}</TableCell>
-                <TableCell className="flex gap-1">
-                  <EditDialog banner={banner} />
-                  <Button variant="ghost" size="icon" className="text-red-600" onClick={() => handleDelete(banner.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+    <DataTable
+      columns={columns}
+      data={banners}
+      pageSize={10}
+      searchPlaceholder="Buscar banner..."
+      emptyMessage="Sin banners"
+    />
   )
 }

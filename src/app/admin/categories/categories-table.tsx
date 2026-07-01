@@ -3,14 +3,6 @@
 import { Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -19,6 +11,8 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { DataTable, type Column } from '@/components/ui/data-table'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -97,7 +91,6 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
   const supabase = createClient()
 
   async function handleDelete(id: number) {
-    if (!confirm('¿Eliminar categoría?')) return
     const { error } = await supabase.from('categories').update({ activo: false }).eq('id', id)
     if (error) toast.error(error.message)
     else {
@@ -112,39 +105,36 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
     }
   }
 
+  const columns: Column<Category>[] = [
+    { header: 'Nombre', accessorKey: 'nombre', sortable: true, searchable: true },
+    { header: 'Identificador', accessorKey: 'slug', sortable: true },
+    {
+      header: 'Acciones',
+      cell: (c) => (
+        <div className="flex gap-1">
+          <EditDialog category={c} />
+          <ConfirmDialog
+            title="Eliminar Categoría"
+            description="¿Estás seguro de eliminar esta categoría?"
+            confirmText="Eliminar"
+            onConfirm={() => handleDelete(c.id)}
+          >
+            <Button variant="ghost" size="icon" className="text-red-600">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </ConfirmDialog>
+        </div>
+      ),
+    },
+  ]
+
   return (
-    <div className="border rounded-lg overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nombre</TableHead>
-            <TableHead>Identificador</TableHead>
-            <TableHead>Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {categories.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
-                Sin categorías
-              </TableCell>
-            </TableRow>
-          ) : (
-            categories.map((cat) => (
-              <TableRow key={cat.id}>
-                <TableCell className="font-medium">{cat.nombre}</TableCell>
-                <TableCell className="text-muted-foreground">{cat.slug}</TableCell>
-                <TableCell className="flex gap-1">
-                  <EditDialog category={cat} />
-                  <Button variant="ghost" size="icon" className="text-red-600" onClick={() => handleDelete(cat.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+    <DataTable
+      columns={columns}
+      data={categories}
+      pageSize={10}
+      searchPlaceholder="Buscar categoría..."
+      emptyMessage="Sin categorías"
+    />
   )
 }

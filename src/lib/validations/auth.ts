@@ -23,6 +23,10 @@ export const profileUpdateSchema = z.object({
   telefono: z.string().regex(/^\d{7,12}$/).optional(),
 })
 
+export const phoneUpdateSchema = z.object({
+  telefono: z.string().regex(/^\d{7,12}$/, 'Teléfono inválido (solo dígitos, 7-12)'),
+})
+
 export type LoginInput = z.infer<typeof loginSchema>
 export type RegisterInput = z.infer<typeof registerSchema>
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>

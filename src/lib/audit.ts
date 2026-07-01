@@ -7,11 +7,12 @@ interface LogParams {
   datos_previos?: Record<string, unknown> | null
   datos_nuevos?: Record<string, unknown> | null
   adminId?: string
+  ip_address?: string
 }
 
 export async function logAdminAction(
   supabase: SupabaseClient,
-  { adminId, accion, tabla, registro_id, datos_previos, datos_nuevos }: LogParams
+  { adminId, accion, tabla, registro_id, datos_previos, datos_nuevos, ip_address }: LogParams
 ) {
   if (!adminId) {
     const { data: { user } } = await supabase.auth.getUser()
@@ -26,5 +27,6 @@ export async function logAdminAction(
     registro_id: String(registro_id ?? ''),
     datos_previos: datos_previos ?? null,
     datos_nuevos: datos_nuevos ?? null,
+    ip_address: ip_address ?? null,
   })
 }

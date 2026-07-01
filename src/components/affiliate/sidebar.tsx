@@ -16,7 +16,7 @@ import { createClient } from '@/lib/supabase/client'
 const links = [
   { href: '/affiliate', icon: LayoutDashboard, label: 'Panel' },
   { href: '/affiliate/links', icon: Link2, label: 'Mis Links' },
-  { href: '/affiliate/orders', icon: ShoppingCart, label: 'Mis Pedidos' },
+  { href: '/affiliate/orders', icon: ShoppingCart, label: 'Mis Ventas' },
   { href: '/affiliate/profile', icon: User, label: 'Mi Perfil' },
 ]
 

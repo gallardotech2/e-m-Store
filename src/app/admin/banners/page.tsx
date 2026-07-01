@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/auth-utils'
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false } }
 import { BannersTable } from './banners-table'
@@ -7,7 +7,8 @@ import { BannerForm } from './banner-form'
 import { BannersAdminToggle } from './banners-admin-toggle'
 
 export default async function AdminBannersPage() {
-  const supabase = await createClient()
+  const { user, supabase } = await requireAdmin()
+  if (!user || !supabase) return <p className="text-center text-muted-foreground py-8">No autorizado</p>
 
   const [{ data: banners }, { data: products }] = await Promise.all([
     supabase.from('banners').select('*, products(nombre)').eq('activo', true).order('orden'),
