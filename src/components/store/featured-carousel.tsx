@@ -85,7 +85,7 @@ export function FeaturedCarousel({ items }: { items: FeaturedItem[] }) {
                         <h3 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight mb-2">
                           {p.nombre}
                         </h3>
-                        <p className="text-sm text-gray-500 line-clamp-3 mb-3">
+                        <p className="text-sm text-gray-500 whitespace-pre-line line-clamp-3 mb-3">
                           {p.descripcion || 'Producto de alta calidad'}
                         </p>
                         <div className="flex items-baseline gap-2 mb-3">

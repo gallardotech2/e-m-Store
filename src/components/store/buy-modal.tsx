@@ -150,11 +150,11 @@ export function BuyModal() {
                   src={product.imagen_url}
                   alt={product.nombre}
                   fill
-                  className="rounded-lg object-contain"
+                  className="rounded-xl object-contain"
                 />
               </div>
             ) : (
-              <div className="w-28 h-28 bg-gray-100 rounded-lg flex items-center justify-center">
+              <div className="w-28 h-28 bg-gray-100 rounded-xl flex items-center justify-center">
                 <ShoppingCart className="h-10 w-10 text-gray-400" />
               </div>
             )}
@@ -164,7 +164,7 @@ export function BuyModal() {
             <h2 className="text-lg md:text-2xl font-bold text-red-600 leading-tight">
               {product.nombre}
             </h2>
-            <p className={`text-sm text-gray-500 ${descExpanded ? '' : 'line-clamp-2'}`}>
+            <p className={`text-sm text-gray-500 whitespace-pre-line ${descExpanded ? '' : 'line-clamp-2'}`}>
               {product.descripcion ?? 'Producto de alta calidad'}
             </p>
             {product.descripcion && (

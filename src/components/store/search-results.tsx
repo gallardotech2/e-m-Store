@@ -45,7 +45,7 @@ export function SearchResults({
 
             return (
             <Card key={product.id} className="flex-row items-center p-3 gap-4 border-0 shadow-md">
-              <div className="relative h-24 w-24 shrink-0 rounded-lg overflow-hidden bg-gray-100">
+              <div className="relative h-24 w-24 shrink-0 rounded-xl overflow-hidden bg-gray-100">
                 {product.imagen_url && (
                   <Image
                     src={product.imagen_url}
@@ -63,7 +63,7 @@ export function SearchResults({
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-sm truncate">{product.nombre}</h3>
-                <p className="text-sm text-muted-foreground line-clamp-1">
+                <p className="text-sm text-muted-foreground whitespace-pre-line line-clamp-1">
                   {product.descripcion ?? 'Producto de alta calidad'}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
